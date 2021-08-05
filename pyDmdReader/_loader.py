@@ -6,6 +6,7 @@ Dmd reader library - DLL loader module
 
 from ctypes import cdll
 import os
+import sys
 from . import _api
 from typing import List
 
@@ -51,8 +52,21 @@ class ApiLoader:
             global _g_dmd_reader_api_dll
 
             # Load the dmd reader dll
-            dll_file_path = os.path.normpath(os.path.abspath(filename))
-            _g_dmd_reader_api_dll = cdll.LoadLibrary(dll_file_path)
+            if sys.platform.startswith("win"):                
+                dll_file_paths = [os.path.join(os.path.dirname(__file__),  'bin', filename)] 
+            else:
+                dll_file_paths = [
+                    filename,
+                    os.path.join(os.path.dirname(__file__),  'bin', filename),
+                    ]
+
+            # Try multiple file paths until one does not throw an exception
+            for dll_file_path in dll_file_paths:
+                try:
+                    _g_dmd_reader_api_dll = cdll.LoadLibrary(dll_file_path)
+                    break
+                except FileNotFoundError:
+                    pass
 
             # Initialize all dmd reader functions
             for dmd_function in _get_exposed_dmd_functions():

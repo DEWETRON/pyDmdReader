@@ -40,7 +40,7 @@ from . import _loader, _api
 from ._dmd_reader import DmdReader
 from .data_types import *
 
-_module_loader = _loader.ApiLoader(os.path.join(os.path.dirname(__file__),  'bin', DMDREADER_DLL_NAME))
+_module_loader = _loader.ApiLoader(DMDREADER_DLL_NAME)
 
 def dispose():
     """Close the dmd reader dll"""
