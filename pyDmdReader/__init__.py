@@ -2,7 +2,9 @@
 Python module to read Dewetron Oxygen DMD files
 
 Example usage:
-TODO
+dmd_file = pyDmdReader.DmdReader('filename.dmd')
+data = dmd_file.get_data('channel_name')
+dmd_file.close()
 """
 __copyright__ = "Copyright 2021 DEWETRON GmbH"
 __version__ = '0.0.1'
