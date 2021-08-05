@@ -13,6 +13,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/DEWETRON/pyDmdReader",
+    keywords='Measurement, Signal processing, Storage',
     project_urls={
         "Bug Tracker": "https://github.com/DEWETRON/pyDmdReader/issues",
         "Source Code": "https://github.com/DEWETRON/pyDmdReader",
@@ -23,7 +24,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     platforms=["Windows", "Linux"],
-    packages=setuptools.find_packages(),
-    install_requires=['numpy'],
+    packages=["pyDmdReader"],
+    package_dir={"pyDmdReader": "pyDmdReader"},
+    package_data={'pyDmdReader': ['bin/*.dll', 'bin/*.so']},
+    install_requires=['numpy', 'pandas'],
     python_requires=">=3.6",
 )

@@ -1,0 +1,128 @@
+"""
+Copyright DEWETRON GmbH 2019
+
+Dmd reader library - Module for all accessible data types returned by DmdReader functions
+"""
+
+
+import pandas as pd
+from datetime import timezone, timedelta
+from .types import MarkerEventSource, MarkerEventType, ChannelType
+
+
+class _ConverterBase:
+    """Base class"""
+    def __init__(self, structure):
+        for field in structure._fields_:
+            field_name = field[0]
+            field_value = getattr(structure, field_name)
+            if isinstance(field_value, bytes):
+                field_value = field_value.decode()
+            setattr(self, field_name, field_value)
+
+    def __repr__(self):
+        return "{} ({})".format(self.__class__.__name__, ", ".join(
+            ["{}: {}".format(key, value) for key, value in self.__dict__.items()])
+        )
+
+
+class DateTimeZone(_ConverterBase):
+    """Describes the Timestamp Format"""
+    year = None
+    day_of_year = None
+    time_of_day = None
+    time_offset = None
+    valid = None
+
+    def __init__(self, structure):
+        _ConverterBase.__init__(self, structure)
+
+    @property
+    def datetime(self) -> pd.Timestamp:
+        """Get an according pandas Timestamp object"""
+        tzinfo = timezone(timedelta(minutes=self.time_offset))
+
+        return (
+            pd.Timestamp(year=self.year, month=1, day=1, tz=tzinfo) +
+            pd.Timedelta(self.day_of_year - 1, unit="days") +
+            pd.Timedelta(self.time_of_day, unit="seconds")
+        )
+
+    def __str__(self):
+        return str(self.datetime)
+
+
+class HeaderField(_ConverterBase):
+    """Describes a single header field"""
+    name = None
+    value = None
+
+    def __init__(self, structure):
+        _ConverterBase.__init__(self, structure)
+
+
+class ChannelInformation(_ConverterBase):
+    """Describes the channel information"""
+    # SampleRate [Hz]
+    sample_rate = None
+    # Channel Type
+    type = None
+    # Name of the channel
+    name = None
+    # Physical unit of the channel sample data
+    unit = None
+    # Description of the channel
+    description = None
+    # Measurement duration of the channel's sample data [seconds]
+    measurement_duration = None
+    # Minimum range of the channel's sample data. Specified in the physical unit of the channel
+    range_min = None
+    # Maximum range of the channel's sample data. Specified in the physical unit of the channel
+    range_max = None
+
+    def __init__(self, structure):
+        _ConverterBase.__init__(self, structure)
+        self.type = ChannelType(self.type)
+
+
+class MarkerEvent(_ConverterBase):
+    """Describes one marker event"""
+    source = None
+    type = None
+    time = None
+    text = None
+
+    def __init__(self, structure):
+        _ConverterBase.__init__(self, structure)
+        self.source = MarkerEventSource(self.source)
+        self.type = MarkerEventType(self.type)
+
+
+class Sweep(_ConverterBase):
+    """Describes a single sweep of data"""
+    first_sample = None
+    last_sample = None
+    start_time = None
+    end_time = None
+    sample_frequency = None
+
+    @property
+    def max_samples(self):
+        """Calculated max samples"""
+        return self.last_sample - self.first_sample + 1
+
+    def __init__(self, structure):
+        _ConverterBase.__init__(self, structure)
+
+
+class Version:
+    """Describes the dll version"""
+    major = None
+    minor = None
+
+    def __init__(self, major, minor):
+        self.major = major
+        self.minor = minor
+
+    def __repr__(self):
+        return "{} (major: {}, minor: {})".format(self.__class__.__name__, self.major, self.minor)
