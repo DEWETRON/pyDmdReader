@@ -1,4 +1,8 @@
-import pytest
+"""
+Copyright DEWETRON GmbH 2021
+
+Dmd reader library - Unit Tests
+"""
 import pyDmdReader
 import os.path
 
