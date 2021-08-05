@@ -10,7 +10,7 @@ pyDmdReader is a Python wrapper for the Dewetron DMD Reader API
 It should be sufficient to call
 
 ```
-pip3 install pydmdreader
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/5.6.0.tar.gz
 ```
 
 
@@ -26,7 +26,7 @@ sudo apt install ./dewetron-dmd-reader-api_5.6.0-buster_amd64.deb
 
 Now install pydmdreader:
 ```
-pip3 install pydmdreader
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/5.6.0.tar.gz
 ```
 
 
