@@ -131,7 +131,7 @@ class DmdReader(DataFrameColumn):
 
             return data_frame
         else:
-            raise Exception("Sampletype {} not supported for reduced data".format(ch_config.reduced_sample_type))
+            raise NotImplementedError("Sampletype {} not supported for reduced data".format(ch_config.reduced_sample_type))
 
     def get_header(self) -> List[HeaderField]:
         """Read the Header Entries"""
@@ -178,7 +178,7 @@ class DmdReader(DataFrameColumn):
                 ch_config.reduced_sweeps = _api.get_reduced_sweeps(channel_handle, 0, num_reduced_sweeps)
 
             if ch_config.name in channels:
-                raise Exception("Duplicate channel name: {}".format(ch_config.name))
+                raise KeyError("Duplicate channel name: {}".format(ch_config.name))
 
             channels[ch_config.name] = ch_config
         return channels
@@ -186,7 +186,7 @@ class DmdReader(DataFrameColumn):
     def __check_channel(self, ch_name) -> None:
         """Check if given ch_name is available"""
         if ch_name not in self.channels:
-            raise Exception("No channel with given name ({}) can be found".format(ch_name))
+            raise KeyError("No channel with given name ({}) can be found".format(ch_name))
 
     def __get_all_sweeps(self, ch_config) -> Tuple[np.ndarray, np.ndarray]:
         """Get data from all sweeps of given ch_name"""
@@ -245,7 +245,7 @@ class DmdReader(DataFrameColumn):
                 ch_config.max_sample_dimension
             )
         else:
-            raise Exception("Sampletype {} not supported".format(ch_config.raw_sample_type))
+            raise NotImplementedError("Sampletype {} not supported".format(ch_config.raw_sample_type))
 
         timestamps = np.frombuffer(raw_timestamps, dtype=timestamps_dtype, count=num_valid_samples)
         data = np.frombuffer(raw_values, dtype=ch_config.dtype, count=num_valid_samples*ch_config.max_sample_dimension)
@@ -262,14 +262,14 @@ class DmdReader(DataFrameColumn):
             first_sample = sweep.first_sample
         else:
             if first_sample > max_samples:
-                raise Exception("Given first_sample ({}) is greater than max. available samples ({})".format(
+                raise IndexError("Given first_sample ({}) is greater than max. available samples ({})".format(
                     first_sample, max_samples)
                 )
             # HINT: Within the dmd file, samples are counted from acquisition start not recording start
             first_sample += sweep.first_sample
 
         if sweep.last_sample - first_sample + 1 < max_samples:
-            raise Exception("Amount of requested samples ({}) is greater than max. available samples ({})".format(
+            raise IndexError("Amount of requested samples ({}) is greater than max. available samples ({})".format(
                 max_samples, sweep.last_sample-first_sample+1)
             )
         return first_sample, max_samples
@@ -278,7 +278,7 @@ class DmdReader(DataFrameColumn):
     def __check_sweep_number(ch_config, sweep_no) -> None:
         """Check if given sweep number is valid for given ch_config"""
         if not(0 <= sweep_no < len(ch_config.sweeps)):
-            raise Exception("Selecetd sweep number {} not valid. Valid range: 0 .. {}".format(
+            raise IndexError("Selected sweep number {} not valid. Valid range: 0 .. {}".format(
                 sweep_no, len(ch_config.sweeps)-1)
             )
 
