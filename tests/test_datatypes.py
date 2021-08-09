@@ -63,3 +63,16 @@ def test_check_demo_file():
     assert data.dtypes[0] == 'float64'
     assert data.iloc[0].name == 0.000
     assert sum(abs(data.iloc[0] - [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])) < 1e-15
+
+    dmd.close()
+
+def test_check_demo_file_multicolumn():
+    dmd = pyDmdReader.DmdReader(DMD_FILE)
+    data = dmd.get_data(['Cnt 0/0 (Demo)', 'DI 1/1 (Demo)', 'VS 1/1 (Demo)'])
+
+    assert len(data.dtypes) == 12
+    assert data.dtypes[0] == 'float64'
+    assert data.dtypes[1] == 'int32'
+    assert data.dtypes[2] == 'float64'
+    
+    dmd.close()
