@@ -28,12 +28,12 @@ def test_check_demo_file():
 
     assert dmd.channel_names[1] == 'Cnt 0/0 (Demo)'
     channel = dmd.channels['Cnt 0/0 (Demo)']
-    assert channel.dtype == 'float64' # TODO: this should be int32
-    data = dmd.get_data('DI 1/1 (Demo)')
+    assert channel.dtype == 'float64'
+    data = dmd.get_data('Cnt 0/0 (Demo)')
     assert len(data) == 10000
     assert len(data.columns) == 2
     assert data.dtypes[0] == 'float64'
-    assert data.dtypes[1] == 'int32'
+    assert data.dtypes[1] == 'float64'
 
     assert dmd.channel_names[2] == 'DI 1/1 (Demo)'
     channel = dmd.channels['DI 1/1 (Demo)']
