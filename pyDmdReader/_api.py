@@ -63,7 +63,7 @@ def _check_error(error_code) -> None:
     error_code = ErrorCode(error_code)
     if error_code.value != 0:
         location = inspect.stack()[1][3]
-        raise Exception("Error in {}() -> {}".format(location, error_code))
+        raise RuntimeError("Error in {}() -> {}".format(location, error_code))
 
 # Exported API functions
 
