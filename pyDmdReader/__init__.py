@@ -39,7 +39,7 @@ if not DMDREADER_DLL_NAME:
     raise ImportError("OS ({} {}) not supported".format(sys.platform, platform.architecture()))
 
 from . import _loader, _api
-from ._dmd_reader import DmdReader
+from ._dmd_reader import DmdReader, TimestampFormat
 from .data_types import *
 
 _module_loader = _loader.ApiLoader(DMDREADER_DLL_NAME)

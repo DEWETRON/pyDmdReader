@@ -22,42 +22,44 @@ def test_check_demo_file():
     assert channel.dtype == 'float64'
     data = dmd.get_data('AI 0/0 (Demo)')
     assert len(data) == 40002
-    assert len(data.columns) == 2
+    assert len(data.columns) == 1
     assert data.dtypes[0] == 'float64'
-    assert data.dtypes[1] == 'float64'
 
     assert dmd.channel_names[1] == 'Cnt 0/0 (Demo)'
     channel = dmd.channels['Cnt 0/0 (Demo)']
     assert channel.dtype == 'float64'
     data = dmd.get_data('Cnt 0/0 (Demo)')
     assert len(data) == 10000
-    assert len(data.columns) == 2
+    assert len(data.columns) == 1
     assert data.dtypes[0] == 'float64'
-    assert data.dtypes[1] == 'float64'
 
     assert dmd.channel_names[2] == 'DI 1/1 (Demo)'
     channel = dmd.channels['DI 1/1 (Demo)']
     assert channel.dtype == 'i4'
     data = dmd.get_data('DI 1/1 (Demo)')
     assert len(data) == 10000
-    assert len(data.columns) == 2
-    assert data.dtypes[0] == 'float64'
-    assert data.dtypes[1] == 'int32'
+    assert len(data.columns) == 1
+    assert data.dtypes[0] == 'int32'
+    assert data.iloc[0].name == 0.000
+    assert data.iloc[0][0] == 0
+    assert data.iloc[1].name == 0.001
+    assert data.iloc[1][0] == 1
 
     assert dmd.channel_names[3] == 'VC 1/1 (Demo)'
     channel = dmd.channels['VC 1/1 (Demo)']
     assert channel.dtype == 'complex128'
     data = dmd.get_data('VC 1/1 (Demo)')
     assert len(data) == 10000
-    assert len(data.columns) == 6
-    assert data.dtypes[0] == 'float64'
-    assert data.dtypes[1] == 'complex128'
+    assert len(data.columns) == 5
+    assert data.dtypes[0] == 'complex128'
 
     assert dmd.channel_names[4] == 'VS 1/1 (Demo)'
     channel = dmd.channels['VS 1/1 (Demo)']
     assert channel.dtype == 'float64'
     data = dmd.get_data('VS 1/1 (Demo)')
     assert len(data) == 10000
-    assert len(data.columns) == 11
+    assert len(data.columns) == 10
+    assert data.columns[0] == 'VS 1/1 (Demo)[0]'
     assert data.dtypes[0] == 'float64'
-    assert data.dtypes[1] == 'float64'
+    assert data.iloc[0].name == 0.000
+    assert sum(abs(data.iloc[0] - [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])) < 1e-15

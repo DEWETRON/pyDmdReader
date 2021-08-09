@@ -1,19 +1,25 @@
 """
-Copyright DEWETRON GmbH 2019
+Copyright DEWETRON GmbH 2019-2021
 
 DMD reader library - Main class
 """
 
-
 import numpy as np
 import pandas as pd
 import datetime
+from enum import Enum
 from . import _api
 from .types import ChannelType, SampleType, DataFrameColumn
 from .data_types import HeaderField, MarkerEvent, Version
 from ._channel_config import ChannelConfig
 from typing import List, Dict, Tuple
 
+class TimestampFormat(Enum):
+    """Specification of all possible timestamp formats"""
+    NONE = 0
+    SECONDS_SINCE_START = 1
+    ABSOLUTE_LOCAL_TIME = 2
+    ABSOLUTE_UTC_TIME = 3
 
 class DmdReader(DataFrameColumn):
     """Dmd reader class"""
@@ -28,16 +34,18 @@ class DmdReader(DataFrameColumn):
         self.channels = self.__get_channel_infos()
         self.channel_names = sorted(self.channels.keys())
 
-    def get_data(
-        self, ch_name, sweep_no=None, first_sample=None, max_samples=None, abs_time=False, utc=True
+    def get_data(self,
+        ch_name,
+        sweep_no=None,
+        first_sample=None, max_samples=None,
+        timestamp_format = TimestampFormat.SECONDS_SINCE_START
     ) -> pd.DataFrame:
         """
         Read all data from specified channel. If sweep is given, only this is read.
         If sweep_no is None, first_sample and max_samples are ignored
-        By default relative timestamps are returned:
-            - abs_timestamp and utc = True -> relative timestamps are replaced with absolute utc timezone timestamps
-            - abs_timestamp is True and utc is False -> relative timestamps are replaced with absolute local recorded
-              timezone timestamps
+        By default timestamps relative to recording start are returned:
+            - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
+            - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded timezone timestamps
         """
         self.__check_channel(ch_name)
         ch_config = self.channels[ch_name]
@@ -64,33 +72,37 @@ class DmdReader(DataFrameColumn):
 
         if ch_config.max_sample_dimension != 1:
             if ch_config.max_sample_dimension == len(data):
-                columns = [self.DATA_FRAME_COLUMN_TIMESTAMPS]
-                columns.extend(
-                    [self.DATA_FRAME_COLUMN_VECTOR_DATA.format(i) for i in range(0, ch_config.max_sample_dimension)]
-                )
+                columns = ["{}[{}]".format(ch_name, i) for i in range(0, ch_config.max_sample_dimension)]
 
+                #TODO: This code is untested
+                raise NotImplemented("The following code has not been tested and therefore raises an exception for now")
                 data = data.reshape(1, ch_config.max_sample_dimension)
-                timestamps = timestamps.reshape(1, len(timestamps))
-                new_data = np.concatenate((timestamps, data), axis=1)
-                new_data = new_data.reshape(1, ch_config.max_sample_dimension + 1)
-                data_frame = pd.DataFrame(new_data, columns=columns)
-            else:
-                # TODO: This is a little bit slow for large vector channel data
-                data_frame = pd.DataFrame({self.DATA_FRAME_COLUMN_TIMESTAMPS: timestamps})
-                for i in range(0, ch_config.max_sample_dimension):
-                    data_frame[self.DATA_FRAME_COLUMN_VECTOR_DATA.format(i)] = data[i::ch_config.max_sample_dimension]
-        else:
-            data_frame = pd.DataFrame({
-                self.DATA_FRAME_COLUMN_TIMESTAMPS: timestamps,
-                self.DATA_FRAME_COLUMN_DATA: data
-            })
+                if timestamp_format == TimestampFormat.NONE:
+                    data_frame = pd.DataFrame(data=data, columns=columns)
+                else:
+                    timestamps = timestamps.reshape(1, len(timestamps))
+                    data_frame = pd.DataFrame(index=timestamps, data=data, columns=columns)
 
-        if abs_time:
-            data_frame = self.__get_data_abs_timestamp(data_frame, utc)
+                #new_data = np.concatenate((timestamps, data), axis=1)
+                #new_data = new_data.reshape(1, ch_config.max_sample_dimension + 1)
+                #data_frame = pd.DataFrame(new_data, columns=columns)
+            else:
+                data_frame = pd.DataFrame(index=timestamps)
+                for i in range(0, ch_config.max_sample_dimension):
+                    data_frame["{}[{}]".format(ch_name, i)] = data[i::ch_config.max_sample_dimension]
+        else:
+            if timestamp_format == TimestampFormat.NONE:
+                data_frame = pd.DataFrame(data=data, columns=[ch_name])
+            else:
+                data_frame = pd.DataFrame(index=timestamps, data=data, columns=[ch_name])
+
+        if (timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or
+            timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME):
+            data_frame = self.__get_data_abs_timestamp(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
 
         return data_frame
 
-    def get_reduced_data(self, ch_name, abs_time=False, utc=True) -> pd.DataFrame:
+    def get_reduced_data(self, ch_name, timestamp_format = TimestampFormat.SECONDS_SINCE_START) -> pd.DataFrame:
         """
         Read the reduced data from the given channel
 
@@ -118,16 +130,17 @@ class DmdReader(DataFrameColumn):
                 timestamps = np.r_[timestamps, np.frombuffer(reduced_timestamps, count=num_valid_samples)]
                 data = np.r_[data, np.frombuffer(reduced_values, count=4*num_valid_samples)]
 
-            data_frame = pd.DataFrame({
-                self.DATA_FRAME_COLUMN_TIMESTAMPS: timestamps,
-                self.DATA_FRAME_COLUMN_REDUCED_MIN: data[0::4],
-                self.DATA_FRAME_COLUMN_REDUCED_MAX: data[1::4],
-                self.DATA_FRAME_COLUMN_REDUCED_AVG: data[2::4],
-                self.DATA_FRAME_COLUMN_REDUCED_RMS: data[3::4],
+            data_frame = pd.DataFrame(
+                index=timestamps,
+                columns={
+                    self.DATA_FRAME_COLUMN_REDUCED_MIN: data[0::4],
+                    self.DATA_FRAME_COLUMN_REDUCED_MAX: data[1::4],
+                    self.DATA_FRAME_COLUMN_REDUCED_AVG: data[2::4],
+                    self.DATA_FRAME_COLUMN_REDUCED_RMS: data[3::4],
             })
 
-            if abs_time:
-                data_frame = self.__get_data_abs_timestamp(data_frame, utc)
+            if timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME:
+                data_frame = self.__get_data_abs_timestamp(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
 
             return data_frame
         else:
@@ -289,16 +302,6 @@ class DmdReader(DataFrameColumn):
 
     def __get_data_abs_timestamp(self, data_frame, utc=True) -> pd.DataFrame:
         """Convert Timestamp column to absolute timestamps"""
-        if utc:
-            start_time = self.measurement_start_time_utc
-        else:
-            start_time = self.measurement_start_time_local
-        setattr(
-            data_frame,
-            self.DATA_FRAME_COLUMN_TIMESTAMPS,
-            [
-                start_time + datetime.timedelta(seconds=sec) for sec in
-                getattr(data_frame, self.DATA_FRAME_COLUMN_TIMESTAMPS)
-            ]
-        )
+        start_time = self.measurement_start_time_utc if utc else self.measurement_start_time_local
+        data_frame.index = [start_time + datetime.timedelta(seconds=sec) for sec in data_frame.index]
         return data_frame
