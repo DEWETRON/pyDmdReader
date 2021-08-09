@@ -331,5 +331,5 @@ class DmdReader(DataFrameColumn):
     def __get_data_abs_timestamp(self, data_frame, utc=True) -> pd.DataFrame:
         """Convert Timestamp column to absolute timestamps"""
         start_time = self.measurement_start_time_utc if utc else self.measurement_start_time_local
-        data_frame.index = [start_time + datetime.timedelta(seconds=sec) for sec in data_frame.index]
+        data_frame.index = start_time + pd.to_timedelta(data_frame.index, unit='s')
         return data_frame
