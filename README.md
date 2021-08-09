@@ -1,18 +1,23 @@
 # DEWETRON pyDmdReader
 
-pyDmdReader is a Python wrapper for the Dewetron DMD Reader API 
+pyDmdReader is a Python wrapper for the Dewetron DMD Reader API. It allows to conveniently read DMD files that were recorded with the [Dewetron Oxygen](https://www.dewetron.com/products/oxygen-measurement-software/) measurement software.
+
+This Python API is currently under development and the inferface can change at any time. 
 
 
 # Installation
 
 ## Windows
 
-It should be sufficient to call
+At the moment, the pyDmdReader python package can be installed with
 
 ```
 python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/5.6.0.tar.gz
 ```
 
+Windows binaries (DMD reader DLLs) are installed automatically.
+
+Direct integration into the Python Package Index is planned in the future.
 
 ## Debian Buster 
 
@@ -24,14 +29,12 @@ Installation is done using:
 sudo apt install ./dewetron-dmd-reader-api_5.6.0-buster_amd64.deb
 ```
 
-Now install pydmdreader:
+Now install pyDmdReader:
 ```
 python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/5.6.0.tar.gz
 ```
 
-
 If pip fails, please try manual installation:
-
 
 You have to fullfill other py library dependencies:
 
@@ -44,6 +47,20 @@ This will automatically numpy which is also needed.
 Do NOT install these packages using "apt".
 These are outdated and incompatible to pydmdreader.
 
+# Example usage
+There are example scripts in the examples subdirectory that show how to read DMD files in Python. A simple example looks like this:
+```python
+import pyDmdReader
+
+dmd_file = pyDmdReader.DmdReader('my_recording.dmd')
+print("Channels found in file: {}".format(dmd_file.channel_names))
+
+# Read all data from channel 'AI 1/1'
+data = dmd_file.get_data('AI 1/1')
+print(data)
+
+dmd_file.close()
+```
 
 **For technical questions please contact:**
 
