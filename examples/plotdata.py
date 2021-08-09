@@ -24,15 +24,12 @@ for header in dmd_file.get_header():
 
 print()
 
-selected_channel = 1
-channel_name = channel_names[selected_channel]
-print("Channel config: {}".format(dmd_file.channels[channel_name]))
-
-data = dmd_file.get_data(channel_name, abs_time=True, utc=False)
+print("Fetching data for channels {}".format(channel_names[0:2]))
+data = dmd_file.get_data(channel_names[0:2], timestamp_format=pyDmdReader.TimestampFormat.ABSOLUTE_LOCAL_TIME)
 print("Data as pandas DataFrame:")
 print(data)
 
-data[1:100].plot(kind='line', x='TIMESTAMPS', y='DATA')
+data[1:100].plot(kind='line')
 plt.show()
 
 # Cleanup

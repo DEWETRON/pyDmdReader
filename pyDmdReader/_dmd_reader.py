@@ -35,66 +35,94 @@ class DmdReader(DataFrameColumn):
         self.channel_names = sorted(self.channels.keys())
 
     def get_data(self,
-        ch_name,
+        ch_names,
         sweep_no=None,
-        first_sample=None, max_samples=None,
-        timestamp_format = TimestampFormat.SECONDS_SINCE_START
+        first_sample: int=None, max_samples: int=None,
+        timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> pd.DataFrame:
         """
-        Read all data from specified channel. If sweep is given, only this is read.
+        Read all data from specified channels (name or list of names).
+        If a sweep_no is given, only this is sweep is read.
         If sweep_no is None, first_sample and max_samples are ignored
-        By default timestamps relative to recording start are returned:
+        By default timestamps in seconds relative to recording start are returned:
+            - TimestampFormat.NONE -> no timestamp information is stored in the data frame
             - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
             - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded timezone timestamps
         """
-        self.__check_channel(ch_name)
-        ch_config = self.channels[ch_name]
+        if type(ch_names) is str:
+            ch_names = [ch_names] # convert single channel to list
 
-        if ch_config.raw_sample_type == SampleType.INVALID:
+        used_channels = []
+        sample_rate = None
+        for ch_name in ch_names:
+            self.__check_channel(ch_name)
+            ch_config = self.channels[ch_name]
+
+            if ch_config.raw_sample_type != SampleType.INVALID:
+                used_channels.append(ch_name)
+            
+            if sample_rate is None:
+                sample_rate = ch_config.sample_rate
+            else:
+                if sample_rate != ch_config.sample_rate:
+                    raise RuntimeError("All requested channels need to have the same sample rate")
+        
+        if len(used_channels) == 0:
             return pd.DataFrame()
 
-        if sweep_no is None:
-            # All sweeps
-            timestamps, data = self.__get_all_sweeps(ch_config)
-        else:
-            # Single sweep
-            self.__check_sweep_number(ch_config, sweep_no)
+        data_frame = None
+        for ch_name in used_channels:
+            ch_config = self.channels[ch_name]
 
-            sweep = ch_config.sweeps[sweep_no]
-            first_sample, max_samples = self.__get_corrected_sample_count(sweep, first_sample, max_samples)
+            if sweep_no is None:
+                # All sweeps
+                timestamps, data = self.__get_all_sweeps(ch_config)
+            else:
+                # Single sweep
+                self.__check_sweep_number(ch_config, sweep_no)
 
-            # Only for Sync Channels
-            if ch_config.sample_rate == 0:
-                # HINT: sample_rate == 0 -> Async channel
-                # TODO: Single sweep not for async channels
-                return pd.DataFrame()
-            timestamps, data, *_ = self.__get_single_sweep(ch_config, first_sample, max_samples)
+                sweep = ch_config.sweeps[sweep_no]
+                first_sample_corrected, max_samples_corrected = self.__get_corrected_sample_count(sweep, first_sample, max_samples)
 
-        if ch_config.max_sample_dimension != 1:
-            if ch_config.max_sample_dimension == len(data):
-                columns = ["{}[{}]".format(ch_name, i) for i in range(0, ch_config.max_sample_dimension)]
-
-                #TODO: This code is untested
-                raise NotImplemented("The following code has not been tested and therefore raises an exception for now")
-                data = data.reshape(1, ch_config.max_sample_dimension)
-                if timestamp_format == TimestampFormat.NONE:
-                    data_frame = pd.DataFrame(data=data, columns=columns)
+                # Only for Sync Channels
+                if ch_config.sample_rate == 0:
+                    # HINT: sample_rate == 0 -> Async channel
+                    # TODO: Single sweep not for async channels
+                    return pd.DataFrame()
+                timestamps, data, *_ = self.__get_single_sweep(ch_config, first_sample_corrected, max_samples_corrected)
+            
+            if ch_config.max_sample_dimension == 1:
+                if data_frame is None:
+                    if timestamp_format == TimestampFormat.NONE:
+                        data_frame = pd.DataFrame()
+                    else:
+                        data_frame = pd.DataFrame(index=timestamps)
                 else:
-                    timestamps = timestamps.reshape(1, len(timestamps))
-                    data_frame = pd.DataFrame(index=timestamps, data=data, columns=columns)
+                    if timestamp_format != TimestampFormat.NONE and not np.array_equal(data_frame.index, timestamps):
+                        raise RuntimeError("Cannot combine channels with different timestamps. Try fetching data for each channel individually.")
 
-                #new_data = np.concatenate((timestamps, data), axis=1)
-                #new_data = new_data.reshape(1, ch_config.max_sample_dimension + 1)
-                #data_frame = pd.DataFrame(new_data, columns=columns)
+                data_frame[ch_name] = data
             else:
-                data_frame = pd.DataFrame(index=timestamps)
-                for i in range(0, ch_config.max_sample_dimension):
-                    data_frame["{}[{}]".format(ch_name, i)] = data[i::ch_config.max_sample_dimension]
-        else:
-            if timestamp_format == TimestampFormat.NONE:
-                data_frame = pd.DataFrame(data=data, columns=[ch_name])
-            else:
-                data_frame = pd.DataFrame(index=timestamps, data=data, columns=[ch_name])
+                if ch_config.max_sample_dimension == len(data):
+                    columns = ["{}[{}]".format(ch_name, i) for i in range(0, ch_config.max_sample_dimension)]
+
+                    #TODO: This code is untested
+                    raise NotImplemented("The following code has not been tested and therefore raises an exception for now")
+                    data = data.reshape(1, ch_config.max_sample_dimension)
+                    if timestamp_format == TimestampFormat.NONE:
+                        data_frame = pd.DataFrame(data=data, columns=columns)
+                    else:
+                        timestamps = timestamps.reshape(1, len(timestamps))
+                        data_frame = pd.DataFrame(index=timestamps, data=data, columns=columns)
+
+                    #new_data = np.concatenate((timestamps, data), axis=1)
+                    #new_data = new_data.reshape(1, ch_config.max_sample_dimension + 1)
+                    #data_frame = pd.DataFrame(new_data, columns=columns)
+                else:
+                    if data_frame is None:
+                        data_frame = pd.DataFrame(index=timestamps)
+                    for i in range(0, ch_config.max_sample_dimension):
+                        data_frame["{}[{}]".format(ch_name, i)] = data[i::ch_config.max_sample_dimension]
 
         if (timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or
             timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME):

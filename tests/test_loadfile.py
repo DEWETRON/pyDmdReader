@@ -59,3 +59,17 @@ def test_check_timestamp_absolute_utc():
     assert column_names[0] == dmd.channel_names[0]
     assert type(data.index) is pandas.DatetimeIndex
     assert data.iloc[0].name == pandas.Timestamp("2021-08-05T10:21:27.2708", tz="UTC")
+
+def test_check_multichannel():
+    dmd = DmdReader(SIMPLE_DMD)
+    data = dmd.get_data([dmd.channel_names[0], dmd.channel_names[1]], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME)
+    assert len(data) == 6331
+    column_names = [c for c in data.columns]
+    assert column_names == [dmd.channel_names[0], dmd.channel_names[1]]
+
+def test_check_multichannel_notimestamp():
+    dmd = DmdReader(SIMPLE_DMD)
+    data = dmd.get_data(dmd.channel_names[0:3], timestamp_format=TimestampFormat.NONE)
+    assert len(data) == 6331
+    column_names = [c for c in data.columns]
+    assert column_names == dmd.channel_names[0:3]
