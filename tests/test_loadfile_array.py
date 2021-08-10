@@ -48,6 +48,18 @@ def test_check_timestamp_absolute_utc():
     assert timestamps.dtype == np.dtype('datetime64[ns]')
     assert timestamps[0] == np.datetime64('2021-08-05T10:21:27.2708')
 
+def test_check_vector():
+    dmd = DmdReader(INTERNAL_DMD)
+    data, _ = dmd.get_data_array('VS 1/1 (Demo)', timestamp_format=TimestampFormat.NONE)
+    assert data.shape == (10, 10000)
+    assert data.dtype is np.dtype('float64')
+
+def test_check_complex_vector():
+    dmd = DmdReader(INTERNAL_DMD)
+    data, _ = dmd.get_data_array('VC 1/1 (Demo)', timestamp_format=TimestampFormat.NONE)
+    assert data.shape == (5, 10000)
+    assert data.dtype is np.dtype('complex128')
+
 def test_check_multicolumn():
     dmd = DmdReader(SIMPLE_DMD)
     data, timestamps = dmd.get_data_array(dmd.channel_names[0:2], timestamp_format=TimestampFormat.SECONDS_SINCE_START)

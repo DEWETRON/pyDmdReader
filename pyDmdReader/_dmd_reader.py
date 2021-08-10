@@ -97,16 +97,16 @@ class DmdReader(DataFrameColumn):
                     return pd.DataFrame()
                 timestamps, data, *_ = self.__get_single_sweep(ch_config, first_sample_corrected, max_samples_corrected)
             
-            if ch_config.max_sample_dimension == 1:
-                if data_frame is None:
-                    if timestamp_format == TimestampFormat.NONE:
-                        data_frame = pd.DataFrame()
-                    else:
-                        data_frame = pd.DataFrame(index=timestamps)
+            if data_frame is None:
+                if timestamp_format == TimestampFormat.NONE:
+                    data_frame = pd.DataFrame()
                 else:
-                    if timestamp_format != TimestampFormat.NONE and not np.array_equal(data_frame.index, timestamps):
-                        raise RuntimeError("Cannot combine channels with different timestamps. Try fetching data for each channel individually.")
+                    data_frame = pd.DataFrame(index=timestamps)
+            else:
+                if timestamp_format != TimestampFormat.NONE and not np.array_equal(data_frame.index, timestamps):
+                    raise RuntimeError("Cannot combine channels with different timestamps. Try fetching data for each channel individually.")
 
+            if ch_config.max_sample_dimension == 1:
                 data_frame[ch_name] = data
             else:
                 if ch_config.max_sample_dimension == len(data):
@@ -144,7 +144,7 @@ class DmdReader(DataFrameColumn):
     ):
         """
         Read all data from specified channels (name or list of names).
-        Each channel will be stored in a column of a numpy data array and a separate timestamp array
+        Each channel will be stored in a row of a numpy data array. A separate timestamp array will contain the timestamps.
         If a sweep_no is given, only this is sweep is read.
         If sweep_no is None, first_sample and max_samples are ignored
         By default timestamps in seconds relative to recording start are returned:
@@ -179,20 +179,24 @@ class DmdReader(DataFrameColumn):
                     return None, None
                 timestamps, data, *_ = self.__get_single_sweep(ch_config, first_sample_corrected, max_samples_corrected)
 
-            if ch_config.max_sample_dimension == 1:
-                if result_timestamps is None:
-                    if timestamp_format != TimestampFormat.NONE:
-                        result_timestamps = timestamps
-                else:
-                    if timestamp_format != TimestampFormat.NONE and not np.array_equal(result_timestamps, timestamps):
-                        raise RuntimeError("Cannot combine channels with different timestamps. Try fetching data for each channel individually.")
+            if result_timestamps is None:
+                if timestamp_format != TimestampFormat.NONE:
+                    result_timestamps = timestamps
+            else:
+                if timestamp_format != TimestampFormat.NONE and not np.array_equal(result_timestamps, timestamps):
+                    raise RuntimeError("Cannot combine channels with different timestamps. Try fetching data for each channel individually.")
 
+            if ch_config.max_sample_dimension == 1:
                 if len(result) == 0:
                     result = data
                 else:
                     result = np.vstack([result, data])
             else:
-                raise NotImplementedError()
+                for i in range(0, ch_config.max_sample_dimension):
+                    if len(result) == 0:
+                        result = data[i::ch_config.max_sample_dimension]
+                    else:
+                        result = np.vstack([result, data[i::ch_config.max_sample_dimension]])
 
         if (timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or
             timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME):
