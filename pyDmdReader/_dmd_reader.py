@@ -135,6 +135,71 @@ class DmdReader(DataFrameColumn):
             data_frame = self.__get_data_abs_timestamp(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
 
         return data_frame
+    
+    def get_data_array(self,
+        ch_names,
+        sweep_no=None,
+        first_sample: int=None, max_samples: int=None,
+        timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
+    ):
+        """
+        Read all data from specified channels (name or list of names).
+        Each channel will be stored in a column of a numpy data array and a separate timestamp array
+        If a sweep_no is given, only this is sweep is read.
+        If sweep_no is None, first_sample and max_samples are ignored
+        By default timestamps in seconds relative to recording start are returned:
+            - TimestampFormat.NONE -> no timestamp information is stored in the data frame
+            - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
+            - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded timezone timestamps
+        """
+        used_channels = self.__gather_usable_channels(ch_names)
+
+        if len(used_channels) == 0:
+            return None, None
+        
+        result = np.array([])
+        result_timestamps = None
+        for ch_name in used_channels:
+            ch_config = self.channels[ch_name]
+
+            if sweep_no is None:
+                # All sweeps
+                timestamps, data = self.__get_all_sweeps(ch_config)
+            else:
+                # Single sweep
+                self.__check_sweep_number(ch_config, sweep_no)
+
+                sweep = ch_config.sweeps[sweep_no]
+                first_sample_corrected, max_samples_corrected = self.__get_corrected_sample_count(sweep, first_sample, max_samples)
+
+                # Only for Sync Channels
+                if ch_config.sample_rate == 0:
+                    # HINT: sample_rate == 0 -> Async channel
+                    # TODO: Single sweep not for async channels
+                    return None, None
+                timestamps, data, *_ = self.__get_single_sweep(ch_config, first_sample_corrected, max_samples_corrected)
+
+            if ch_config.max_sample_dimension == 1:
+                if result_timestamps is None:
+                    if timestamp_format != TimestampFormat.NONE:
+                        result_timestamps = timestamps
+                else:
+                    if timestamp_format != TimestampFormat.NONE and not np.array_equal(result_timestamps, timestamps):
+                        raise RuntimeError("Cannot combine channels with different timestamps. Try fetching data for each channel individually.")
+
+                if len(result) == 0:
+                    result = data
+                else:
+                    result = np.vstack([result, data])
+            else:
+                raise NotImplementedError()
+
+        if (timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or
+            timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME):
+            #data_frame = self.__get_data_abs_timestamp(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
+            raise NotImplementedError()
+
+        return result, result_timestamps
 
     def get_reduced_data(self, ch_name, timestamp_format = TimestampFormat.SECONDS_SINCE_START) -> pd.DataFrame:
         """
