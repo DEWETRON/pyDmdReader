@@ -6,7 +6,6 @@ DMD reader library - Main class
 
 import numpy as np
 import pandas as pd
-import datetime
 from enum import Enum
 from . import _api
 from .types import ChannelType, SampleType, DataFrameColumn
@@ -34,21 +33,7 @@ class DmdReader(DataFrameColumn):
         self.channels = self.__get_channel_infos()
         self.channel_names = sorted(self.channels.keys())
 
-    def get_data(self,
-        ch_names,
-        sweep_no=None,
-        first_sample: int=None, max_samples: int=None,
-        timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
-    ) -> pd.DataFrame:
-        """
-        Read all data from specified channels (name or list of names).
-        If a sweep_no is given, only this is sweep is read.
-        If sweep_no is None, first_sample and max_samples are ignored
-        By default timestamps in seconds relative to recording start are returned:
-            - TimestampFormat.NONE -> no timestamp information is stored in the data frame
-            - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
-            - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded timezone timestamps
-        """
+    def __gather_usable_channels(self, ch_names):
         if type(ch_names) is str:
             ch_names = [ch_names] # convert single channel to list
 
@@ -66,7 +51,28 @@ class DmdReader(DataFrameColumn):
             else:
                 if sample_rate != ch_config.sample_rate:
                     raise RuntimeError("All requested channels need to have the same sample rate")
-        
+
+        return used_channels
+
+    def get_data_dataframe(self,
+        ch_names,
+        sweep_no=None,
+        first_sample: int=None, max_samples: int=None,
+        timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
+    ) -> pd.DataFrame:
+        """
+        Read all data from specified channels (name or list of names).
+        Each channel will be stored in a column of a pandas DataFrame with a common timestamp index.
+        If a sweep_no is given, only this is sweep is read.
+        If sweep_no is None, first_sample and max_samples are ignored
+        By default timestamps in seconds relative to recording start are returned:
+            - TimestampFormat.NONE -> no timestamp information is stored in the data frame
+            - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
+            - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded timezone timestamps
+        """
+
+        used_channels = self.__gather_usable_channels(ch_names)
+
         if len(used_channels) == 0:
             return pd.DataFrame()
 

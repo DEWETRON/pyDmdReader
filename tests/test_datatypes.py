@@ -20,7 +20,7 @@ def test_check_demo_file():
     assert channel.unit == 'V'
     assert channel.sample_rate == 10000.0
     assert channel.dtype == 'float64'
-    data = dmd.get_data('AI 0/0 (Demo)')
+    data = dmd.get_data_dataframe('AI 0/0 (Demo)')
     assert len(data) == 40002
     assert len(data.columns) == 1
     assert data.dtypes[0] == 'float64'
@@ -28,7 +28,7 @@ def test_check_demo_file():
     assert dmd.channel_names[1] == 'Cnt 0/0 (Demo)'
     channel = dmd.channels['Cnt 0/0 (Demo)']
     assert channel.dtype == 'float64'
-    data = dmd.get_data('Cnt 0/0 (Demo)')
+    data = dmd.get_data_dataframe('Cnt 0/0 (Demo)')
     assert len(data) == 10000
     assert len(data.columns) == 1
     assert data.dtypes[0] == 'float64'
@@ -36,7 +36,7 @@ def test_check_demo_file():
     assert dmd.channel_names[2] == 'DI 1/1 (Demo)'
     channel = dmd.channels['DI 1/1 (Demo)']
     assert channel.dtype == 'i4'
-    data = dmd.get_data('DI 1/1 (Demo)')
+    data = dmd.get_data_dataframe('DI 1/1 (Demo)')
     assert len(data) == 10000
     assert len(data.columns) == 1
     assert data.dtypes[0] == 'int32'
@@ -48,7 +48,7 @@ def test_check_demo_file():
     assert dmd.channel_names[3] == 'VC 1/1 (Demo)'
     channel = dmd.channels['VC 1/1 (Demo)']
     assert channel.dtype == 'complex128'
-    data = dmd.get_data('VC 1/1 (Demo)')
+    data = dmd.get_data_dataframe('VC 1/1 (Demo)')
     assert len(data) == 10000
     assert len(data.columns) == 5
     assert data.dtypes[0] == 'complex128'
@@ -56,7 +56,7 @@ def test_check_demo_file():
     assert dmd.channel_names[4] == 'VS 1/1 (Demo)'
     channel = dmd.channels['VS 1/1 (Demo)']
     assert channel.dtype == 'float64'
-    data = dmd.get_data('VS 1/1 (Demo)')
+    data = dmd.get_data_dataframe('VS 1/1 (Demo)')
     assert len(data) == 10000
     assert len(data.columns) == 10
     assert data.columns[0] == 'VS 1/1 (Demo)[0]'
@@ -68,7 +68,7 @@ def test_check_demo_file():
 
 def test_check_demo_file_multicolumn():
     dmd = pyDmdReader.DmdReader(DMD_FILE)
-    data = dmd.get_data(['Cnt 0/0 (Demo)', 'DI 1/1 (Demo)', 'VS 1/1 (Demo)'])
+    data = dmd.get_data_dataframe(['Cnt 0/0 (Demo)', 'DI 1/1 (Demo)', 'VS 1/1 (Demo)'])
 
     assert len(data.dtypes) == 12
     assert data.dtypes[0] == 'float64'
