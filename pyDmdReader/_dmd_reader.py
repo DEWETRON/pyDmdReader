@@ -132,7 +132,7 @@ class DmdReader(DataFrameColumn):
 
         if (timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or
             timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME):
-            data_frame = self.__get_data_abs_timestamp(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
+            data_frame = self.__get_data_abs_timestamp_pandas(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
 
         return data_frame
     
@@ -196,8 +196,7 @@ class DmdReader(DataFrameColumn):
 
         if (timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or
             timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME):
-            #data_frame = self.__get_data_abs_timestamp(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
-            raise NotImplementedError()
+            result_timestamps = self.__get_data_abs_timestamp_array(result_timestamps, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
 
         return result, result_timestamps
 
@@ -239,7 +238,7 @@ class DmdReader(DataFrameColumn):
             })
 
             if timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME:
-                data_frame = self.__get_data_abs_timestamp(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
+                data_frame = self.__get_data_abs_timestamp_pandas(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
 
             return data_frame
         else:
@@ -399,8 +398,15 @@ class DmdReader(DataFrameColumn):
         """Open the dmd file"""
         return _api.open_file(file_name)
 
-    def __get_data_abs_timestamp(self, data_frame, utc=True) -> pd.DataFrame:
+    def __get_data_abs_timestamp_pandas(self, data_frame, utc=True) -> pd.DataFrame:
         """Convert Timestamp column to absolute timestamps"""
         start_time = self.measurement_start_time_utc if utc else self.measurement_start_time_local
         data_frame.index = start_time + pd.to_timedelta(data_frame.index, unit='s')
         return data_frame
+    
+    def __get_data_abs_timestamp_array(self, timestamps, utc=True) -> np.array:
+        """Convert Timestamp column to absolute timestamps"""
+        start_time = self.measurement_start_time_utc if utc else self.measurement_start_time_local
+        start_time_np = (start_time + start_time.utcoffset()).to_datetime64()
+        timestamps = start_time_np + np.timedelta64(1, 's') * timestamps
+        return timestamps
