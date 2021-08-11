@@ -84,11 +84,8 @@ class MarkerEventType(Enum):
 
 class DataFrameColumn:
     """All accessible DataFrame columns are in uppercase to avoid shadowing built-in names"""
-    DATA_FRAME_COLUMN_TIMESTAMPS = "TIMESTAMPS"
-    DATA_FRAME_COLUMN_DATA = "DATA"
     DATA_FRAME_COLUMN_MESSAGE_ID = "MESSAGE_ID"
     DATA_FRAME_COLUMN_MESSAGE_EXTENDED = "MESSAGE_EXTENDED"
-    DATA_FRAME_COLUMN_VECTOR_DATA = "DATA_{}"
     DATA_FRAME_COLUMN_REDUCED_MIN = "MIN"
     DATA_FRAME_COLUMN_REDUCED_MAX = "MAX"
     DATA_FRAME_COLUMN_REDUCED_AVG = "AVG"

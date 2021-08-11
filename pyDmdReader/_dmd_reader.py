@@ -20,7 +20,7 @@ class TimestampFormat(Enum):
     ABSOLUTE_LOCAL_TIME = 2
     ABSOLUTE_UTC_TIME = 3
 
-class DmdReader(DataFrameColumn):
+class DmdReader:
     """Dmd reader class"""
     def __init__(self, file_name):
         """
@@ -57,14 +57,14 @@ class DmdReader(DataFrameColumn):
 
         return used_channels
 
-    def get_data_dataframe(self,
+    def read_dataframe(self,
         ch_names,
         sweep_no=None,
         first_sample: int=None, max_samples: int=None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> pd.DataFrame:
         """
-        Read all data from specified channels (name or list of names).
+        Read all data from specified channels (single name or list of names).
         Each channel will be stored in a column of a pandas DataFrame with a common timestamp index.
         If a sweep_no is given, only this is sweep is read.
         If sweep_no is None, first_sample and max_samples are ignored
@@ -139,14 +139,14 @@ class DmdReader(DataFrameColumn):
 
         return data_frame
     
-    def get_data_array(self,
+    def read_array(self,
         ch_names,
         sweep_no=None,
         first_sample: int=None, max_samples: int=None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
-    ):
+    ) -> Tuple[np.array, np.array]:
         """
-        Read all data from specified channels (name or list of names).
+        Read all data from specified channels (single name or list of names).
         Each channel will be stored in a row of a numpy data array. A separate timestamp array will contain the timestamps.
         If a sweep_no is given, only this is sweep is read.
         If sweep_no is None, first_sample and max_samples are ignored
@@ -207,7 +207,7 @@ class DmdReader(DataFrameColumn):
 
         return result, result_timestamps
 
-    def get_reduced_data(self, ch_name, timestamp_format = TimestampFormat.SECONDS_SINCE_START) -> pd.DataFrame:
+    def read_reduced(self, ch_name, timestamp_format = TimestampFormat.SECONDS_SINCE_START) -> pd.DataFrame:
         """
         Read the reduced data from the given channel
 
@@ -235,14 +235,14 @@ class DmdReader(DataFrameColumn):
                 timestamps = np.r_[timestamps, np.frombuffer(reduced_timestamps, count=num_valid_samples)]
                 data = np.r_[data, np.frombuffer(reduced_values, count=4*num_valid_samples)]
 
-            data_frame = pd.DataFrame(
-                index=timestamps,
-                columns={
-                    self.DATA_FRAME_COLUMN_REDUCED_MIN: data[0::4],
-                    self.DATA_FRAME_COLUMN_REDUCED_MAX: data[1::4],
-                    self.DATA_FRAME_COLUMN_REDUCED_AVG: data[2::4],
-                    self.DATA_FRAME_COLUMN_REDUCED_RMS: data[3::4],
-            })
+            if timestamp_format == TimestampFormat.NONE:
+                data_frame = pd.DataFrame(dtype="float64")
+            else:
+                data_frame = pd.DataFrame(index=timestamps, dtype="float64")
+            data_frame[DataFrameColumn.DATA_FRAME_COLUMN_REDUCED_MIN] = data[0::4]
+            data_frame[DataFrameColumn.DATA_FRAME_COLUMN_REDUCED_MAX] = data[1::4]
+            data_frame[DataFrameColumn.DATA_FRAME_COLUMN_REDUCED_AVG] = data[2::4]
+            data_frame[DataFrameColumn.DATA_FRAME_COLUMN_REDUCED_RMS] = data[3::4]
 
             if timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME:
                 data_frame = self.__get_data_abs_timestamp_pandas(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)

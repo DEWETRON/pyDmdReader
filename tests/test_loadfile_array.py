@@ -14,12 +14,12 @@ INTERNAL_DMD = 'DMD_DEMO_FILE'
 def test_check_invalid_name():
     dmd = DmdReader(INTERNAL_DMD)
     with pytest.raises(KeyError):
-        dmd.get_data_array("INVALID")
+        dmd.read_array("INVALID")
     dmd.close()
 
 def test_check_timestamp_none():
     dmd = DmdReader(INTERNAL_DMD)
-    data, timestamps = dmd.get_data_array(dmd.channel_names[0], timestamp_format=TimestampFormat.NONE)
+    data, timestamps = dmd.read_array(dmd.channel_names[0], timestamp_format=TimestampFormat.NONE)
     assert timestamps is None
     assert len(data) == 40002
     assert data.dtype is np.dtype('float64')
@@ -27,7 +27,7 @@ def test_check_timestamp_none():
 
 def test_check_timestamp_seconds():
     dmd = DmdReader(INTERNAL_DMD)
-    data, timestamps = dmd.get_data_array(dmd.channel_names[0], timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    data, timestamps = dmd.read_array(dmd.channel_names[0], timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 40002
     assert len(timestamps) == 40002
     assert data.dtype is np.dtype('float64')
@@ -37,7 +37,7 @@ def test_check_timestamp_seconds():
 
 def test_check_timestamp_absolute_local():
     dmd = DmdReader(SIMPLE_DMD)
-    data, timestamps = dmd.get_data_array(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_LOCAL_TIME)
+    data, timestamps = dmd.read_array(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_LOCAL_TIME)
     assert len(data) == 6331
     assert data.dtype is np.dtype('float64')
     assert timestamps.dtype == np.dtype('datetime64[ns]')
@@ -46,7 +46,7 @@ def test_check_timestamp_absolute_local():
 
 def test_check_timestamp_absolute_utc():
     dmd = DmdReader(SIMPLE_DMD)
-    data, timestamps = dmd.get_data_array(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME)
+    data, timestamps = dmd.read_array(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME)
     assert len(data) == 6331
     assert data.dtype is np.dtype('float64')
     assert timestamps.dtype == np.dtype('datetime64[ns]')
@@ -55,21 +55,21 @@ def test_check_timestamp_absolute_utc():
 
 def test_check_vector():
     dmd = DmdReader(INTERNAL_DMD)
-    data, _ = dmd.get_data_array('VS 1/1 (Demo)', timestamp_format=TimestampFormat.NONE)
+    data, _ = dmd.read_array('VS 1/1 (Demo)', timestamp_format=TimestampFormat.NONE)
     assert data.shape == (10, 10000)
     assert data.dtype is np.dtype('float64')
     dmd.close()
 
 def test_check_complex_vector():
     dmd = DmdReader(INTERNAL_DMD)
-    data, _ = dmd.get_data_array('VC 1/1 (Demo)', timestamp_format=TimestampFormat.NONE)
+    data, _ = dmd.read_array('VC 1/1 (Demo)', timestamp_format=TimestampFormat.NONE)
     assert data.shape == (5, 10000)
     assert data.dtype is np.dtype('complex128')
     dmd.close()
 
 def test_check_multicolumn():
     dmd = DmdReader(SIMPLE_DMD)
-    data, timestamps = dmd.get_data_array(dmd.channel_names[0:2], timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    data, timestamps = dmd.read_array(dmd.channel_names[0:2], timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert data.shape == (2, 6331)
     assert len(timestamps) == 6331
     assert data.dtype is np.dtype('float64')

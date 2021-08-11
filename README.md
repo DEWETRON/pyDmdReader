@@ -56,7 +56,7 @@ dmd_file = pyDmdReader.DmdReader('my_recording.dmd')
 print("Channels found in file: {}".format(dmd_file.channel_names))
 
 # Read all data from channel 'AI 1/1'
-data = dmd_file.get_data_dataframe('AI 1/1')
+data = dmd_file.read_dataframe('AI 1/1')
 print(data)
 
 dmd_file.close()

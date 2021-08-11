@@ -31,7 +31,7 @@ for header in dmd_file.headers:
 print()
 
 print("Fetching data for channels {}".format(channel_names[0:2]))
-data = dmd_file.get_data_dataframe(channel_names[0:2], timestamp_format=pyDmdReader.TimestampFormat.ABSOLUTE_LOCAL_TIME)
+data = dmd_file.read_dataframe(channel_names[0:2], timestamp_format=pyDmdReader.TimestampFormat.ABSOLUTE_LOCAL_TIME)
 print("Data as pandas DataFrame:")
 print(data)
 

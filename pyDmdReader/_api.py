@@ -241,7 +241,7 @@ def get_samples_with_ts_reduced_value_seconds(channel_handle, first_reduced_samp
 @_check_loaded
 def get_samples_and_ts_reduced_value_seconds(channel_handle, first_reduced_sample, max_reduced_samples) -> tuple:
     """
-    DMD Reader API Get samples only (uses _DMDReader_GetSamplesAndTS_ScaledValue_Seconds)
+    DMD Reader API Get samples only (uses _DMDReader_GetSamplesAndTS_ReducedValue_Seconds)
     Two separate arrays
     """
     reduced_samples = (DmdSampleValueReduced * max_reduced_samples)()

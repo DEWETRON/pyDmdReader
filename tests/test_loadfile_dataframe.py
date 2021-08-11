@@ -14,12 +14,12 @@ INTERNAL_DMD = 'DMD_DEMO_FILE'
 def test_check_invalid_name():
     dmd = DmdReader(INTERNAL_DMD)
     with pytest.raises(KeyError):
-        dmd.get_data_dataframe("INVALID")
+        dmd.read_dataframe("INVALID")
     dmd.close()
 
 def test_check_timestamp_none():
     dmd = DmdReader(INTERNAL_DMD)
-    data = dmd.get_data_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.NONE)
+    data = dmd.read_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.NONE)
     assert len(data) == 40002
     column_names = [c for c in data.columns]
     assert len(column_names) == 1
@@ -29,7 +29,7 @@ def test_check_timestamp_none():
 
 def test_check_timestamp_seconds():
     dmd = DmdReader(INTERNAL_DMD)
-    data = dmd.get_data_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    data = dmd.read_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 40002
     column_names = [c for c in data.columns]
     assert len(column_names) == 1
@@ -39,7 +39,7 @@ def test_check_timestamp_seconds():
 
 def test_check_timestamp_absolute_local():
     dmd = DmdReader(SIMPLE_DMD)
-    data = dmd.get_data_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_LOCAL_TIME)
+    data = dmd.read_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_LOCAL_TIME)
     assert len(data) == 6331
     column_names = [c for c in data.columns]
     assert len(column_names) == 1
@@ -50,7 +50,7 @@ def test_check_timestamp_absolute_local():
 
 def test_check_timestamp_absolute_utc():
     dmd = DmdReader(SIMPLE_DMD)
-    data = dmd.get_data_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME)
+    data = dmd.read_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME)
     assert len(data) == 6331
     column_names = [c for c in data.columns]
     assert len(column_names) == 1
@@ -61,7 +61,7 @@ def test_check_timestamp_absolute_utc():
 
 def test_check_multichannel():
     dmd = DmdReader(SIMPLE_DMD)
-    data = dmd.get_data_dataframe([dmd.channel_names[0], dmd.channel_names[1]], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME)
+    data = dmd.read_dataframe([dmd.channel_names[0], dmd.channel_names[1]], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME)
     assert len(data) == 6331
     column_names = [c for c in data.columns]
     assert column_names == [dmd.channel_names[0], dmd.channel_names[1]]
@@ -69,7 +69,7 @@ def test_check_multichannel():
 
 def test_check_multichannel_notimestamp():
     dmd = DmdReader(SIMPLE_DMD)
-    data = dmd.get_data_dataframe(dmd.channel_names[0:3], timestamp_format=TimestampFormat.NONE)
+    data = dmd.read_dataframe(dmd.channel_names[0:3], timestamp_format=TimestampFormat.NONE)
     assert len(data) == 6331
     column_names = [c for c in data.columns]
     assert column_names == dmd.channel_names[0:3]
