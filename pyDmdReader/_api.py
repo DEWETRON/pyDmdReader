@@ -311,7 +311,7 @@ def get_samples_and_ts_scalar_vector_seconds(channel_handle, first_sample, max_s
     """
     samples = (c_double * (max_samples * max_sample_dimension))()
     timestamps = (c_double * max_samples)()
-    dimensions = (c_uint32 * max_samples)()
+    dimensions = None #(c_uint32 * max_samples)() # Unused, so no need to allocate
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
     error_code = _DMDReader_GetSamplesAndTS_ScalarVector_Seconds(
@@ -320,8 +320,8 @@ def get_samples_and_ts_scalar_vector_seconds(channel_handle, first_sample, max_s
         c_uint64(max_samples),
         c_uint32(max_sample_dimension),
         byref(samples),
-        byref(timestamps),
-        dimensions,
+        byref(timestamps),        
+        None, #byref(dimensions),
         byref(num_valid_samples),
         byref(next_sample)
     )
@@ -336,7 +336,7 @@ def get_samples_and_ts_complex_vector_seconds(channel_handle, first_sample, max_
     """
     samples = (DmdSampleValueComplex * (max_samples * max_sample_dimension))()
     timestamps = (c_double * max_samples)()
-    dimensions = (c_uint32 * max_samples)()
+    dimensions = None # (c_uint32 * max_samples)() 
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
     error_code = _DMDReader_GetSamplesAndTS_ComplexVector_Seconds(
@@ -346,7 +346,7 @@ def get_samples_and_ts_complex_vector_seconds(channel_handle, first_sample, max_
         c_uint32(max_sample_dimension),
         byref(samples),
         byref(timestamps),
-        dimensions,
+        None, #byref(dimensions),
         byref(num_valid_samples),
         byref(next_sample)
     )
