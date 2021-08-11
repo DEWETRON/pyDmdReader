@@ -1,7 +1,7 @@
 """
 Copyright DEWETRON GmbH 2021
 
-Dmd reader library - Unit Tests
+Dmd reader library - Unit Tests for internal demo DMD datatypes
 """
 import pyDmdReader
 
@@ -9,8 +9,7 @@ DMD_FILE = 'DMD_DEMO_FILE'
 
 def test_check_demo_file():
     dmd = pyDmdReader.DmdReader(DMD_FILE)
-    version = dmd.get_version()
-    assert version.major == 1 and version.minor == 1
+    assert dmd.version.major == 1 and dmd.version.minor == 1
 
     assert len(dmd.channel_names) >= 5
 

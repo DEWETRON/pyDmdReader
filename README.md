@@ -42,10 +42,10 @@ You have to fullfill other py library dependencies:
 pip3 install pandas
 ```
 
-This will automatically numpy which is also needed.
+This will automatically numpy, which is also needed.
 
 Do NOT install these packages using "apt".
-These are outdated and incompatible to pydmdreader.
+These are outdated and incompatible to pyDmdReader.
 
 # Example usage
 There are example scripts in the examples subdirectory that show how to read DMD files in Python. A simple example looks like this:

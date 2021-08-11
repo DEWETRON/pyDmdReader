@@ -24,14 +24,17 @@ class DmdReader(DataFrameColumn):
     """Dmd reader class"""
     def __init__(self, file_name):
         """
-        Load data file with file_name and create member with channel informations.
+        Load data file with file_name and retrieve channel informations
         This works only for unique channel names, otherwise they get overwitten
         """
         self.__file_handle = self.__load_file(file_name)
         self.measurement_start_time_utc = _api.get_measurement_start_time(self.__file_handle, utc=True).datetime
         self.measurement_start_time_local = _api.get_measurement_start_time(self.__file_handle, utc=False).datetime
-        self.channels = self.__get_channel_infos()
-        self.channel_names = sorted(self.channels.keys())
+        self.__channels = self.__get_channel_infos()
+
+    def close(self) -> None:
+        """Close DMD file"""
+        _api.close_file(self.__file_handle)
 
     def __gather_usable_channels(self, ch_names):
         if type(ch_names) is str:
@@ -41,7 +44,7 @@ class DmdReader(DataFrameColumn):
         sample_rate = None
         for ch_name in ch_names:
             self.__check_channel(ch_name)
-            ch_config = self.channels[ch_name]
+            ch_config = self.__channels[ch_name]
 
             if ch_config.raw_sample_type != SampleType.INVALID:
                 used_channels.append(ch_name)
@@ -78,7 +81,7 @@ class DmdReader(DataFrameColumn):
 
         data_frame = None
         for ch_name in used_channels:
-            ch_config = self.channels[ch_name]
+            ch_config = self.__channels[ch_name]
 
             if sweep_no is None:
                 # All sweeps
@@ -160,7 +163,7 @@ class DmdReader(DataFrameColumn):
         result = np.array([])
         result_timestamps = None
         for ch_name in used_channels:
-            ch_config = self.channels[ch_name]
+            ch_config = self.__channels[ch_name]
 
             if sweep_no is None:
                 # All sweeps
@@ -211,7 +214,7 @@ class DmdReader(DataFrameColumn):
         Returned DataFrame columns: timestamps, min, max, avg, rms
         """
         self.__check_channel(ch_name)
-        ch_config = self.channels[ch_name]
+        ch_config = self.__channels[ch_name]
         data = np.array([], dtype="float64")
         timestamps = np.array([], dtype="float64")
 
@@ -248,22 +251,30 @@ class DmdReader(DataFrameColumn):
         else:
             raise NotImplementedError("Sampletype {} not supported for reduced data".format(ch_config.reduced_sample_type))
 
-    def get_header(self) -> List[HeaderField]:
+    @property
+    def channels(self):
+        """Channel definitions"""
+        return self.__channels
+
+    @property
+    def channel_names(self):
+        """Alphabetically sorted list of channel names"""
+        return sorted(self.__channels.keys())
+
+    @property
+    def headers(self) -> List[HeaderField]:
         """Read the Header Entries"""
         num_header_fields = _api.get_num_header_fields(self.__file_handle)
         return _api.get_header_fields(self.__file_handle, 0, num_header_fields)
 
-    def get_markers(self) -> List[MarkerEvent]:
+    @property
+    def markers(self) -> List[MarkerEvent]:
         """Get all available markers"""
         num_markers = _api.get_num_markers(self.__file_handle)
         return _api.get_markers(self.__file_handle, 0, num_markers)
 
-    def close(self) -> None:
-        """Close DMD file"""
-        _api.close_file(self.__file_handle)
-
-    @staticmethod
-    def get_version() -> Version:
+    @property
+    def version(self) -> Version:
         """Get dmd reader dll version"""
         return _api.get_version()
 
@@ -300,18 +311,19 @@ class DmdReader(DataFrameColumn):
 
     def __check_channel(self, ch_name) -> None:
         """Check if given ch_name is available"""
-        if ch_name not in self.channels:
+        if ch_name not in self.__channels:
             raise KeyError("No channel with given name ({}) can be found".format(ch_name))
 
     def __get_all_sweeps(self, ch_config) -> Tuple[np.ndarray, np.ndarray]:
         """Get data from all sweeps of given ch_name"""
         data = np.array([], dtype=ch_config.dtype)
         timestamps = np.array([], dtype="float64")
+        block_size = int(1e6)
 
         for sweep in ch_config.sweeps:
             first_sample = sweep.first_sample
-            block_size = int(1e6)
-            # HINT: Splitting up blocks is needed for asnyc channels to reduce memory allocation
+
+            # HINT: Splitting up blocks is needed for async channels to reduce memory allocation
             while True:
                 if sweep.last_sample - first_sample + 1 >= block_size:
                     max_samples = block_size

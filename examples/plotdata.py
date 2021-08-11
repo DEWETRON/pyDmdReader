@@ -2,10 +2,16 @@
 Example that opens a simple DMD file, shows the information about the recording and plots some data from the second channel
 """
 
+# Make sure the local module is used (can be omitted if byDmdReader is installed using pip)
+import sys
+sys.path.insert(0, "../pyDmdReader")
+
 import pyDmdReader
 import matplotlib.pyplot as plt
+import os.path
 
-dmd_file = pyDmdReader.DmdReader('tests/data/simple.dmd')
+filename = os.path.abspath(os.path.join(os.path.dirname(__file__), "../tests/data/simple.dmd"))
+dmd_file = pyDmdReader.DmdReader(filename)
 
 print("Local measurement start time (utc): {}".format(dmd_file.measurement_start_time_utc))
 print("Measurement start time (local): {}".format(dmd_file.measurement_start_time_local))
@@ -15,11 +21,11 @@ channel_names = dmd_file.channel_names
 print("All accessible channel names: {}".format(channel_names))
 
 print("Marker:")
-for marker in dmd_file.get_markers():
+for marker in dmd_file.markers:
     print(marker)
 
 print("Global header:")
-for header in dmd_file.get_header():
+for header in dmd_file.headers:
     print(header)
 
 print()

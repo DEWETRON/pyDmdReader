@@ -15,6 +15,7 @@ def test_check_invalid_name():
     dmd = DmdReader(INTERNAL_DMD)
     with pytest.raises(KeyError):
         dmd.get_data_array("INVALID")
+    dmd.close()
 
 def test_check_timestamp_none():
     dmd = DmdReader(INTERNAL_DMD)
@@ -22,6 +23,7 @@ def test_check_timestamp_none():
     assert timestamps is None
     assert len(data) == 40002
     assert data.dtype is np.dtype('float64')
+    dmd.close()
 
 def test_check_timestamp_seconds():
     dmd = DmdReader(INTERNAL_DMD)
@@ -31,6 +33,7 @@ def test_check_timestamp_seconds():
     assert data.dtype is np.dtype('float64')
     assert timestamps.dtype is np.dtype('float64')
     assert timestamps[0] == 1
+    dmd.close()
 
 def test_check_timestamp_absolute_local():
     dmd = DmdReader(SIMPLE_DMD)
@@ -39,6 +42,7 @@ def test_check_timestamp_absolute_local():
     assert data.dtype is np.dtype('float64')
     assert timestamps.dtype == np.dtype('datetime64[ns]')
     assert timestamps[0] == np.datetime64('2021-08-05T12:21:27.2708')
+    dmd.close()
 
 def test_check_timestamp_absolute_utc():
     dmd = DmdReader(SIMPLE_DMD)
@@ -47,18 +51,21 @@ def test_check_timestamp_absolute_utc():
     assert data.dtype is np.dtype('float64')
     assert timestamps.dtype == np.dtype('datetime64[ns]')
     assert timestamps[0] == np.datetime64('2021-08-05T10:21:27.2708')
+    dmd.close()
 
 def test_check_vector():
     dmd = DmdReader(INTERNAL_DMD)
     data, _ = dmd.get_data_array('VS 1/1 (Demo)', timestamp_format=TimestampFormat.NONE)
     assert data.shape == (10, 10000)
     assert data.dtype is np.dtype('float64')
+    dmd.close()
 
 def test_check_complex_vector():
     dmd = DmdReader(INTERNAL_DMD)
     data, _ = dmd.get_data_array('VC 1/1 (Demo)', timestamp_format=TimestampFormat.NONE)
     assert data.shape == (5, 10000)
     assert data.dtype is np.dtype('complex128')
+    dmd.close()
 
 def test_check_multicolumn():
     dmd = DmdReader(SIMPLE_DMD)
@@ -68,3 +75,4 @@ def test_check_multicolumn():
     assert data.dtype is np.dtype('float64')
     assert timestamps.dtype is np.dtype('float64')
     assert timestamps[0] == 0
+    dmd.close()
