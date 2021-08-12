@@ -134,3 +134,14 @@ def test_timerange_both():
     assert data.index[-1] == 5.5
 
     dmd.close()
+
+def test_timerange_simple():
+    dmd = DmdReader(SIMPLE_DMD)
+    # The file has one sweeps [0 - 0.633] but a recording offset to acquisition start
+    data = dmd.read_dataframe(dmd.channel_names[0], start_time=0, end_time=0.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 5001
+    assert type(data.index) is pandas.Float64Index
+    assert data.index[0] == 0
+    assert data.index[-1] == 0.5
+
+    dmd.close()

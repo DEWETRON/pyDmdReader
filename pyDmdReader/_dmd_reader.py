@@ -388,6 +388,14 @@ class DmdReader:
     @staticmethod
     def __get_corrected_sample_count(sweep, start_sample, end_sample = None) -> Tuple[int, int]:
         """Get a corrected first_sample and max_sample value"""
+
+        # TODO: This is a hack, is there a better way to find out the start-offset
+        start_offset = int(sweep.first_sample - sweep.start_time * sweep.sample_frequency)
+
+        start_sample = start_sample + start_offset
+        if end_sample is not None:
+            end_sample = end_sample + start_offset
+
         if start_sample < sweep.first_sample:
             start_sample = sweep.first_sample
         if end_sample is None or end_sample > sweep.last_sample:
