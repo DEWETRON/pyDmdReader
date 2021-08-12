@@ -74,3 +74,63 @@ def test_check_multichannel_notimestamp():
     column_names = [c for c in data.columns]
     assert column_names == dmd.channel_names[0:3]
     dmd.close()
+
+def test_timerange_start():
+    dmd = DmdReader(INTERNAL_DMD)
+    # The file has two sweeps [1-2] and [5-8]
+    data = dmd.read_dataframe(dmd.channel_names[0], start_time=3, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 30001
+    assert type(data.index) is pandas.Float64Index
+    assert data.index[0] == 5
+    assert data.index[-1] == 8
+
+    data = dmd.read_dataframe(dmd.channel_names[0], start_time=6, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 20001
+    assert type(data.index) is pandas.Float64Index
+    assert data.index[0] == 6
+    assert data.index[-1] == 8
+
+    data = dmd.read_dataframe(dmd.channel_names[0], start_time=0.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 40002
+    assert type(data.index) is pandas.Float64Index
+    assert data.index[0] == 1
+    assert data.index[-1] == 8
+
+    dmd.close()
+
+def test_timerange_end():
+    dmd = DmdReader(INTERNAL_DMD)
+    # The file has two sweeps [1-2] and [5-8]
+    data = dmd.read_dataframe(dmd.channel_names[0], end_time=3, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 10001
+    assert type(data.index) is pandas.Float64Index
+    assert data.index[0] == 1
+    assert data.index[-1] == 2
+
+    data = dmd.read_dataframe(dmd.channel_names[0], end_time=5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 10002
+    assert type(data.index) is pandas.Float64Index
+    assert data.index[0] == 1
+    assert data.index[-1] == 5
+
+    data = dmd.read_dataframe(dmd.channel_names[0], end_time=0.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 0
+
+    data = dmd.read_dataframe(dmd.channel_names[0], end_time=1.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 5001
+    assert type(data.index) is pandas.Float64Index
+    assert data.index[0] == 1
+    assert data.index[-1] == 1.5
+    
+    dmd.close()
+
+def test_timerange_both():
+    dmd = DmdReader(INTERNAL_DMD)
+    # The file has two sweeps [1-2] and [5-8]
+    data = dmd.read_dataframe(dmd.channel_names[0], start_time=1.5, end_time=5.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 10002
+    assert type(data.index) is pandas.Float64Index
+    assert data.index[0] == 1.5
+    assert data.index[-1] == 5.5
+
+    dmd.close()

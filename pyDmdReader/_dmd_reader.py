@@ -59,15 +59,14 @@ class DmdReader:
 
     def read_dataframe(self,
         ch_names,
-        sweep_no=None,
-        first_sample: int=None, max_samples: int=None,
+        start_time:float = 0,
+        end_time:float = None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> pd.DataFrame:
         """
         Read all data from specified channels (single name or list of names).
         Each channel will be stored in a column of a pandas DataFrame with a common timestamp index.
-        If a sweep_no is given, only this is sweep is read.
-        If sweep_no is None, first_sample and max_samples are ignored
+        By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples within that inverval are returned
         By default timestamps in seconds relative to recording start are returned:
             - TimestampFormat.NONE -> no timestamp information is stored in the data frame
             - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
@@ -83,22 +82,29 @@ class DmdReader:
         for ch_name in used_channels:
             ch_config = self.__channels[ch_name]
 
-            if sweep_no is None:
+            if start_time == 0 and end_time == None:
                 # All sweeps
                 timestamps, data = self.__get_all_sweeps(ch_config)
             else:
-                # Single sweep
-                self.__check_sweep_number(ch_config, sweep_no)
+                actual_end_time = end_time if end_time is not None else ch_config.sweeps[-1].end_time
 
-                sweep = ch_config.sweeps[sweep_no]
-                first_sample_corrected, max_samples_corrected = self.__get_corrected_sample_count(sweep, first_sample, max_samples)
+                timestamps = np.array([], dtype='float64')
+                data = np.array([])
+                
+                # Get data from suitable sweeps
+                for sweep in ch_config.sweeps:
+                    if sweep.start_time <= actual_end_time and sweep.end_time >= start_time:
+                        if sweep.sample_frequency != 0:
+                            # Sync channel
+                            start_sample = int(start_time * sweep.sample_frequency)
+                            end_sample = int(actual_end_time * sweep.sample_frequency)
+                            first_sample, max_samples = self.__get_corrected_sample_count(sweep, start_sample, end_sample)
 
-                # Only for Sync Channels
-                if ch_config.sample_rate == 0:
-                    # HINT: sample_rate == 0 -> Async channel
-                    # TODO: Single sweep not for async channels
-                    return pd.DataFrame()
-                timestamps, data, *_ = self.__get_single_sweep(ch_config, first_sample_corrected, max_samples_corrected)
+                            sweep_timestamps, sweep_data, *_ = self.__get_single_sweep(ch_config, first_sample, max_samples)
+                            timestamps = np.r_[timestamps, sweep_timestamps]
+                            data = np.r_[data, sweep_data]
+                        else:
+                            raise NotImplementedError("Async channels are not yet supported with timeranges")
             
             if data_frame is None:
                 if timestamp_format == TimestampFormat.NONE:
@@ -380,26 +386,13 @@ class DmdReader:
         return timestamps, data, next_sample
 
     @staticmethod
-    def __get_corrected_sample_count(sweep, first_sample, max_samples) -> Tuple[int, int]:
+    def __get_corrected_sample_count(sweep, start_sample, end_sample = None) -> Tuple[int, int]:
         """Get a corrected first_sample and max_sample value"""
-        if max_samples is None:
-            max_samples = sweep.max_samples
-
-        if first_sample is None:
-            first_sample = sweep.first_sample
-        else:
-            if first_sample > max_samples:
-                raise IndexError("Given first_sample ({}) is greater than max. available samples ({})".format(
-                    first_sample, max_samples)
-                )
-            # HINT: Within the dmd file, samples are counted from acquisition start not recording start
-            first_sample += sweep.first_sample
-
-        if sweep.last_sample - first_sample + 1 < max_samples:
-            raise IndexError("Amount of requested samples ({}) is greater than max. available samples ({})".format(
-                max_samples, sweep.last_sample-first_sample+1)
-            )
-        return first_sample, max_samples
+        if start_sample < sweep.first_sample:
+            start_sample = sweep.first_sample
+        if end_sample is None or end_sample > sweep.last_sample:
+            end_sample = sweep.last_sample
+        return start_sample, end_sample - start_sample + 1
 
     @staticmethod
     def __check_sweep_number(ch_config, sweep_no) -> None:
