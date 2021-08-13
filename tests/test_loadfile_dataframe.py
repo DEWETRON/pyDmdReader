@@ -140,8 +140,12 @@ def test_timerange_simple():
     # The file has one sweeps [0 - 0.633] but a recording offset to acquisition start
     data = dmd.read_dataframe(dmd.channel_names[0], start_time=0, end_time=0.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 5001
-    assert type(data.index) is pandas.Float64Index
     assert data.index[0] == 0
     assert data.index[-1] == 0.5
+
+    data = dmd.read_dataframe(dmd.channel_names[0], start_time=0.1, end_time=0.4, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
+    assert len(data) == 3001
+    assert round(data.index[0], 2) == 0.1
+    assert round(data.index[-1], 2) == 0.4
 
     dmd.close()
