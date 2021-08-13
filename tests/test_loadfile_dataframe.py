@@ -9,6 +9,7 @@ import os.path
 import pytest
 
 SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data/simple.dmd")
+SYNCASYNC_DMD = os.path.join(os.path.dirname(__file__), "data/syncasync.dmd")
 INTERNAL_DMD = 'DMD_DEMO_FILE'
 
 def test_check_invalid_name():
@@ -147,5 +148,29 @@ def test_timerange_simple():
     assert len(data) == 3001
     assert round(data.index[0], 2) == 0.1
     assert round(data.index[-1], 2) == 0.4
+
+    dmd.close()
+
+def test_async():
+    dmd = DmdReader(SYNCASYNC_DMD)
+    # The file has one sweeps [0 - 0.633] but a recording offset to acquisition start
+    all_data_sync = dmd.read_dataframe(dmd.channel_names[0])
+    all_data_async = dmd.read_dataframe(dmd.channel_names[1])
+    assert len(all_data_sync) == 29315
+    assert len(all_data_async) == 293
+    assert all_data_sync.index[0] == 0
+    assert round(all_data_sync.index[-1], 3) == round(dmd.measurement_duration, 3)
+    assert round(all_data_async.index[0], 2) == 0.01 # Async average with 100 Hz
+    assert round(all_data_async.index[-1], 2) == 2.93
+
+    rng_data_sync = dmd.read_dataframe(dmd.channel_names[0], start_time=0.5, end_time=1.5)
+    rng_data_async = dmd.read_dataframe(dmd.channel_names[1], start_time=0.5, end_time=1.5)
+    assert len(rng_data_sync) == 10001
+    assert len(rng_data_async) == 101
+    
+    assert round(rng_data_sync.index[0], 3) == 0.5
+    assert round(rng_data_sync.index[-1], 3) == 1.5
+    assert round(rng_data_async.index[0], 2) == 0.5
+    assert round(rng_data_async.index[-1], 2) == 1.5
 
     dmd.close()

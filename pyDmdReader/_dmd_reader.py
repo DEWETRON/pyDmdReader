@@ -353,8 +353,16 @@ class DmdReader:
                             block_max_samples = last_sample - first_sample + 1
 
                         raw_timestamps, raw_values, next_sample = self.__get_single_sweep(ch_config, first_sample, block_max_samples)
-                        data = np.r_[data, raw_values]
-                        timestamps = np.r_[timestamps, raw_timestamps]
+                        
+                        if len(raw_timestamps) > 0:
+                            if raw_timestamps[-1] <= actual_end_time:
+                                timestamps = np.r_[timestamps, raw_timestamps]
+                                data = np.r_[data, raw_values]
+                            else:
+                                # Do not use sample values outside the requested range
+                                last_valid = np.argmax(raw_timestamps > actual_end_time)
+                                timestamps = np.r_[timestamps, raw_timestamps[:last_valid]]
+                                data = np.r_[data, raw_values[:(last_valid * ch_config.max_sample_dimension)]]
 
                         first_sample = next_sample
 
