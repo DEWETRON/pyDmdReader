@@ -59,6 +59,9 @@ print("Channels found in file: {}".format(dmd_file.channel_names))
 data = dmd_file.read_dataframe('AI 1/1')
 print(data)
 
+# Read data from channel 'AI 1/1' from 1s to 3s after recording start
+data = dmd_file.read_dataframe('AI 1/1', start_time = 1, end_time = 3)
+
 dmd_file.close()
 ```
 

@@ -30,12 +30,12 @@ for header in dmd_file.headers:
 
 print()
 
-print("Fetching data for channels {}".format(channel_names[0:2]))
-data = dmd_file.read_dataframe(channel_names[0:2], timestamp_format=pyDmdReader.TimestampFormat.ABSOLUTE_LOCAL_TIME)
+print("Fetching data for channels {} in the time interval 0.1s and 0.2s".format(channel_names[0:2]))
+data = dmd_file.read_dataframe(channel_names[0:2], timestamp_format=pyDmdReader.TimestampFormat.ABSOLUTE_LOCAL_TIME, start_time=0.1, end_time=0.2)
 print("Data as pandas DataFrame:")
 print(data)
 
-data[1:100].plot(kind='line')
+data.plot(kind='line')
 plt.show()
 
 # Cleanup
