@@ -14,7 +14,7 @@ dmd_file = pyDmdReader.DmdReader(filename)
 channel = 'U1_hRMS@POWER/0'
 
 def readDataFrame(channel, timestamp_format):
-    data = dmd_file.get_data_dataframe(channel, timestamp_format=timestamp_format)
+    data = dmd_file.read_dataframe(channel, timestamp_format=timestamp_format)
     return
 
 def timePandas():
