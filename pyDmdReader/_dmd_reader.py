@@ -59,8 +59,7 @@ class DmdReader:
 
     def read_dataframe(self,
         ch_names,
-        start_time:float = 0,
-        end_time:float = None,
+        start_time:float = 0, end_time:float = None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> pd.DataFrame:
         """
@@ -83,28 +82,9 @@ class DmdReader:
             ch_config = self.__channels[ch_name]
 
             if start_time == 0 and end_time == None:
-                # All sweeps
                 timestamps, data = self.__get_all_sweeps(ch_config)
             else:
-                actual_end_time = end_time if end_time is not None else ch_config.sweeps[-1].end_time
-
-                timestamps = np.array([], dtype='float64')
-                data = np.array([])
-                
-                # Get data from suitable sweeps
-                for sweep in ch_config.sweeps:
-                    if sweep.start_time <= actual_end_time and sweep.end_time >= start_time:
-                        if sweep.sample_frequency != 0:
-                            # Sync channel
-                            start_sample = int(start_time * sweep.sample_frequency)
-                            end_sample = int(actual_end_time * sweep.sample_frequency)
-                            first_sample, max_samples = self.__get_corrected_sample_count(sweep, start_sample, end_sample)
-
-                            sweep_timestamps, sweep_data, *_ = self.__get_single_sweep(ch_config, first_sample, max_samples)
-                            timestamps = np.r_[timestamps, sweep_timestamps]
-                            data = np.r_[data, sweep_data]
-                        else:
-                            raise NotImplementedError("Async channels are not yet supported with timeranges")
+                timestamps, data = self.__get_ranged_sweeps(ch_config, start_time, end_time)
             
             if data_frame is None:
                 if timestamp_format == TimestampFormat.NONE:
@@ -147,15 +127,13 @@ class DmdReader:
     
     def read_array(self,
         ch_names,
-        sweep_no=None,
-        first_sample: int=None, max_samples: int=None,
+        start_time:float = 0, end_time:float = None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> Tuple[np.array, np.array]:
         """
         Read all data from specified channels (single name or list of names).
         Each channel will be stored in a row of a numpy data array. A separate timestamp array will contain the timestamps.
-        If a sweep_no is given, only this is sweep is read.
-        If sweep_no is None, first_sample and max_samples are ignored
+        By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples within that inverval are returned
         By default timestamps in seconds relative to recording start are returned:
             - TimestampFormat.NONE -> no timestamp information is stored in the data frame
             - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
@@ -171,22 +149,10 @@ class DmdReader:
         for ch_name in used_channels:
             ch_config = self.__channels[ch_name]
 
-            if sweep_no is None:
-                # All sweeps
+            if start_time == 0 and end_time == None:
                 timestamps, data = self.__get_all_sweeps(ch_config)
             else:
-                # Single sweep
-                self.__check_sweep_number(ch_config, sweep_no)
-
-                sweep = ch_config.sweeps[sweep_no]
-                first_sample_corrected, max_samples_corrected = self.__get_corrected_sample_count(sweep, first_sample, max_samples)
-
-                # Only for Sync Channels
-                if ch_config.sample_rate == 0:
-                    # HINT: sample_rate == 0 -> Async channel
-                    # TODO: Single sweep not for async channels
-                    return None, None
-                timestamps, data, *_ = self.__get_single_sweep(ch_config, first_sample_corrected, max_samples_corrected)
+                timestamps, data = self.__get_ranged_sweeps(ch_config, start_time, end_time)
 
             if result_timestamps is None:
                 if timestamp_format != TimestampFormat.NONE:
@@ -324,13 +290,13 @@ class DmdReader:
         """Get data from all sweeps of given ch_name"""
         data = np.array([], dtype=ch_config.dtype)
         timestamps = np.array([], dtype="float64")
-        block_size = int(1e6)
+        block_size = 1000000
 
         for sweep in ch_config.sweeps:
             first_sample = sweep.first_sample
 
             # HINT: Splitting up blocks is needed for async channels to reduce memory allocation
-            while True:
+            while first_sample <= sweep.last_sample:
                 if sweep.last_sample - first_sample + 1 >= block_size:
                     max_samples = block_size
                 else:
@@ -340,9 +306,48 @@ class DmdReader:
                 data = np.r_[data, raw_values]
                 timestamps = np.r_[timestamps, raw_timestamps]
 
-                if next_sample > sweep.last_sample:
-                    break
                 first_sample = next_sample
+
+        return timestamps, data
+
+    def __get_ranged_sweeps(self, ch_config, start_time, end_time) -> Tuple[np.array, np.array]:
+        actual_end_time = end_time if end_time is not None else ch_config.sweeps[-1].end_time
+
+        timestamps = np.array([], dtype='float64')
+        data = np.array([])
+        
+        # Get data from suitable sweeps
+        for sweep in ch_config.sweeps:
+            if sweep.start_time <= actual_end_time and sweep.end_time >= start_time:
+                if sweep.sample_frequency != 0:
+                    # Sync channel
+                    start_sample = int(start_time * sweep.sample_frequency)
+                    end_sample = int(actual_end_time * sweep.sample_frequency)
+                    first_sample, max_samples = self.__get_corrected_sample_count(sweep, start_sample, end_sample)
+
+                    sweep_timestamps, sweep_data, *_ = self.__get_single_sweep(ch_config, first_sample, max_samples)
+                    timestamps = np.r_[timestamps, sweep_timestamps]
+                    data = np.r_[data, sweep_data]
+                else:
+                    # Async channel (synthetisize underlying sample_frequency from sweep parameters)
+                    sample_frequency = (sweep.max_samples - 1) / (sweep.end_time - sweep.start_time)
+                    start_sample = int(start_time * sample_frequency)
+                    end_sample = int(actual_end_time * sample_frequency)
+                    first_sample, max_samples = self.__get_corrected_sample_count(sweep, start_sample, end_sample)
+                    last_sample = first_sample + max_samples
+
+                    block_size = 1000000
+                    while first_sample <= last_sample:
+                        if last_sample - first_sample + 1 >= block_size:
+                            block_max_samples = block_size
+                        else:
+                            block_max_samples = last_sample - first_sample + 1
+
+                        raw_timestamps, raw_values, next_sample = self.__get_single_sweep(ch_config, first_sample, block_max_samples)
+                        data = np.r_[data, raw_values]
+                        timestamps = np.r_[timestamps, raw_timestamps]
+
+                        first_sample = next_sample
 
         return timestamps, data
 
