@@ -17,10 +17,15 @@ def readDataFrame(channel, timestamp_format):
     data = dmd_file.read_dataframe(channel, timestamp_format=timestamp_format)
     return
 
+def readDataFrameRange(channel, timestamp_format):
+    data = dmd_file.read_dataframe(channel, timestamp_format=timestamp_format, start_time=0.1, end_time=100)
+    return
+
 def timePandas():
     import timeit
     num = 1
-    setup = "from __main__ import readDataFrame, channel; import pyDmdReader"    
+    setup = "from __main__ import readDataFrame, readDataFrameRange, channel; import pyDmdReader"
+    print("Range read:         {:.3f}".format(timeit.timeit("readDataFrameRange(channel, pyDmdReader.TimestampFormat.SECONDS_SINCE_START)", setup=setup, number=num)))
     print("No timestamp:       {:.3f}".format(timeit.timeit("readDataFrame(channel, pyDmdReader.TimestampFormat.NONE)", setup=setup, number=num)))
     print("Simple timestamp:   {:.3f}".format(timeit.timeit("readDataFrame(channel, pyDmdReader.TimestampFormat.SECONDS_SINCE_START)", setup=setup, number=num)))
     print("Absolute timestamp: {:.3f}".format(timeit.timeit("readDataFrame(channel, pyDmdReader.TimestampFormat.ABSOLUTE_LOCAL_TIME)", setup=setup, number=num)))
