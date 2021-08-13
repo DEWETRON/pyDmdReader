@@ -9,7 +9,7 @@ import pandas as pd
 from enum import Enum
 from . import _api
 from .types import ChannelType, SampleType, DataFrameColumn
-from .data_types import HeaderField, MarkerEvent, Version
+from .data_types import HeaderField, MarkerEvent, MarkerEventType, MarkerEventSource, Version
 from ._channel_config import ChannelConfig
 from typing import List, Dict, Tuple
 
@@ -244,6 +244,15 @@ class DmdReader:
         """Get all available markers"""
         num_markers = _api.get_num_markers(self.__file_handle)
         return _api.get_markers(self.__file_handle, 0, num_markers)
+
+    @property
+    def measurement_duration(self) -> float:
+        """Get the duration of the measurement in seconds"""
+        for marker in self.markers:
+            if marker.source == MarkerEventSource.SOURCE_MANUAL and marker.type == MarkerEventType.STOP:
+                return marker.time
+        
+        raise RuntimeError("Cannot determine the length of the measurement")
 
     @property
     def version(self) -> Version:

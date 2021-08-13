@@ -13,8 +13,9 @@ import os.path
 filename = os.path.abspath(os.path.join(os.path.dirname(__file__), "../tests/data/simple.dmd"))
 dmd_file = pyDmdReader.DmdReader(filename)
 
-print("Local measurement start time (utc): {}".format(dmd_file.measurement_start_time_utc))
-print("Measurement start time (local): {}".format(dmd_file.measurement_start_time_local))
+print("Measurement start time (utc): {}".format(dmd_file.measurement_start_time_utc))
+print("Local measurement start time: {}".format(dmd_file.measurement_start_time_local))
+print("Duration of the measurement: {:.4} seconds".format(dmd_file.measurement_duration))
 
 print("Channels:")
 channel_names = dmd_file.channel_names

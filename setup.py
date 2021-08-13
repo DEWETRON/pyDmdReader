@@ -35,5 +35,5 @@ setuptools.setup(
     package_dir={"pyDmdReader": "pyDmdReader"},
     package_data={'pyDmdReader': ['bin/*.dll', 'bin/*.so']},
     install_requires=['numpy', 'pandas'],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
 )

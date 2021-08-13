@@ -6,7 +6,6 @@ Dmd reader library - Unit Tests
 from pyDmdReader.types import MarkerEventSource, MarkerEventType
 from pyDmdReader import DmdReader
 import os.path
-import pytest
 
 SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data/simple.dmd")
 INTERNAL_DMD = 'DMD_DEMO_FILE'
@@ -45,5 +44,7 @@ def test_markers():
     assert markers[1].type == MarkerEventType.STOP
     assert markers[1].text == "Recording Stop"
     assert markers[1].time >= 0.633
+
+    assert round(dmd.measurement_duration, 4) == 0.6331
 
     dmd.close()

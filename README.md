@@ -1,27 +1,29 @@
 # DEWETRON pyDmdReader
 
-pyDmdReader is a Python wrapper for the Dewetron DMD Reader API. It allows to conveniently read DMD files that were recorded with the [Dewetron Oxygen](https://www.dewetron.com/products/oxygen-measurement-software/) measurement software.
-
-This Python API is currently under development and the inferface can change at any time. 
-
+pyDmdReader is a Python wrapper for the [Dewetron](https://www.dewetron.com/) DMD Reader API. It allows to conveniently read DMD files that were recorded with the [Dewetron Oxygen](https://www.dewetron.com/products/oxygen-measurement-software/) measurement software.
 
 # Installation
 
-## Windows
+Currently, the package needs to be installed by using github release archives.
+Direct integration into the Python Package Index is planned in the future.
 
-At the moment, the pyDmdReader python package can be installed with
+## Microsoft Windows
+
+The pyDmdReader python package can be installed with
 
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/5.6.0.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/0.1.0.tar.gz
 ```
 
 Windows binaries (DMD reader DLLs) are installed automatically.
 
-Direct integration into the Python Package Index is planned in the future.
-
 ## Debian Buster 
 
-Download and install the dmdreader debian package.
+Currently, we support pyDmdReader for Linux on Debian 10 Buster.
+Each Linux distribution requires a separate rpm package to ensure no broken dependencies.
+Contact Dewetron if you need support for another distribution.
+
+For Debian Buster, download and install the dmdreader package `dewetron-dmd-reader-api_5.6.0-buster_amd64.deb` from the [current release](https://github.com/DEWETRON/pyDmdReader/releases/latest) page.
 
 Installation is done using:
 
@@ -31,7 +33,7 @@ sudo apt install ./dewetron-dmd-reader-api_5.6.0-buster_amd64.deb
 
 Now install pyDmdReader:
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/5.6.0.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/0.1.0.tar.gz
 ```
 
 If pip fails, please try manual installation:
@@ -42,10 +44,15 @@ You have to fullfill other py library dependencies:
 pip3 install pandas
 ```
 
-This will automatically numpy, which is also needed.
+or run
+```
+pip install -r requirements.txt
+```
+
+This will automatically install numpy, which is also needed.
 
 Do NOT install these packages using "apt".
-These are outdated and incompatible to pyDmdReader.
+These are outdated and incompatible with pyDmdReader.
 
 # Example usage
 There are example scripts in the examples subdirectory that show how to read DMD files in Python. A simple example looks like this:
@@ -65,18 +72,19 @@ data = dmd_file.read_dataframe('AI 1/1', start_time = 1, end_time = 3)
 dmd_file.close()
 ```
 
-**For technical questions please contact:**
+## Testing
 
-Michael Oberhofer 
+If you want to try out the DMD Reader and have no DMD files at hand, feel free to use example files from the [tests/data](https://github.com/DEWETRON/pyDmdReader/tree/main/tests/data) directory.
 
-michael.oberhofer@dewetron.com
-
-Gunther Laure
-
-gunther.laure@dewetron.com
+This repository comes with pytest compatible unit tests which can be started by calling `pytest` from the root directoty of the repository.
 
 
+# Contact
+For technical or other DMD reader related questions please contact:
 
+- Michael Oberhofer <michael.oberhofer@dewetron.com>
+- Gunther Laure <gunther.laure@dewetron.com>
+- Matthias Straka <matthias.straka@dewetron.com>
 
 # License
 MIT License
