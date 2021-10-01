@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - unreleased
+### Changed
+- Python code cleanup
+
 ## [0.1.0] - 2021-08-13
 
 This is the first production ready release
