@@ -4,13 +4,16 @@ Copyright DEWETRON GmbH 2021
 Dmd reader library - DLL loader module
 """
 
-from ctypes import cdll
+
 import os
 import sys
+from ctypes import cdll
 from . import _api
 from typing import List
 
+
 _g_dmd_reader_api_dll = None
+
 
 def _get_exposed_dmd_functions() -> List[str]:
     """Return a list of fucntions available in the dmd reader dll"""
@@ -46,18 +49,20 @@ def _get_exposed_dmd_functions() -> List[str]:
         "DMDReader_GetReducedSweeps",
     ]
 
+
 class ApiLoader:
+    """Dmd raeder API loader class"""
     def __init__(self, filename):
         try:
             global _g_dmd_reader_api_dll
 
             # Load the dmd reader dll
             if sys.platform.startswith("win"):                
-                dll_file_paths = [os.path.join(os.path.dirname(__file__),  'bin', filename)] 
+                dll_file_paths = [os.path.join(os.path.dirname(__file__), "bin", filename)]
             else:
                 dll_file_paths = [
                     filename,
-                    os.path.join(os.path.dirname(__file__),  'bin', filename),
+                    os.path.join(os.path.dirname(__file__), "bin", filename),
                     ]
 
             # Try multiple file paths until one does not throw an exception
@@ -70,12 +75,12 @@ class ApiLoader:
 
             # Initialize all dmd reader functions
             for dmd_function in _get_exposed_dmd_functions():
-                setattr(_api, "_{}".format(dmd_function), getattr(_g_dmd_reader_api_dll, dmd_function))
+                setattr(_api, f"_{dmd_function}", getattr(_g_dmd_reader_api_dll, dmd_function))
 
             _api.initialize(1, 0)
 
         except Exception as err:
-            raise ImportError("DMD reader dll ({} could not be loaded)".format(filename))
+            raise ImportError(f"DMD reader dll ({filename}) could not be loaded. ({err})")
 
     def __del__(self):
         try:

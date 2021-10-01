@@ -1,11 +1,12 @@
 ﻿"""
-Copyright DEWETRON GmbH 2019
+Copyright DEWETRON GmbH 2021
 
 Dmd reader library - DLL structure module
 """
 
 
 from ctypes import Structure, c_double, c_bool, c_int32, c_uint64, c_char_p
+from typing import Union
 
 
 class DmdSampleValueComplex(Structure):
@@ -102,3 +103,17 @@ class DmdSweep(Structure):
         ("end_time", c_double),
         ("sample_frequency", c_double),
     ]
+
+
+DmdStructures = Union[
+    DmdSampleValueComplex,
+    DmdSampleValueReduced,
+    DmdTimestampUtc,
+    DmdScaledSampleTimeStamp,
+    DmdReducedSampleTimestamp,
+    DmdDigitalSampleTimestamp,
+    DmdHeaderField,
+    DmdChannelInformation,
+    DmdMarkerEvent,
+    DmdSweep,
+]

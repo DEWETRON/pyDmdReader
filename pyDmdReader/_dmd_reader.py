@@ -1,28 +1,25 @@
 """
-Copyright DEWETRON GmbH 2019-2021
+Copyright DEWETRON GmbH 2021
 
 DMD reader library - Main class
 """
 
+
 import numpy as np
 import pandas as pd
-from enum import Enum
 from . import _api
-from .types import ChannelType, SampleType, DataFrameColumn
+from .types import ChannelType, SampleType, DataFrameColumn, TimestampFormat
 from .data_types import HeaderField, MarkerEvent, MarkerEventType, MarkerEventSource, Version
 from ._channel_config import ChannelConfig
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from .data_types import Sweep
+    from ctypes import c_void_p
 
-class TimestampFormat(Enum):
-    """Specification of all possible timestamp formats"""
-    NONE = 0
-    SECONDS_SINCE_START = 1
-    ABSOLUTE_LOCAL_TIME = 2
-    ABSOLUTE_UTC_TIME = 3
 
 class DmdReader:
     """Dmd reader class"""
-    def __init__(self, file_name):
+    def __init__(self, file_name: str):
         """
         Load data file with file_name and retrieve channel informations
         This works only for unique channel names, otherwise they get overwitten
@@ -32,116 +29,124 @@ class DmdReader:
         self.measurement_start_time_local = _api.get_measurement_start_time(self.__file_handle, utc=False).datetime
         self.__channels = self.__get_channel_infos()
 
+    @property
+    def channels(self) -> Dict[str, ChannelConfig]:
+        """Channel definitions"""
+        return self.__channels
+
+    @property
+    def channel_names(self) -> List[str]:
+        """Alphabetically sorted list of channel names"""
+        return sorted(self.__channels.keys())
+
+    @property
+    def headers(self) -> List[HeaderField]:
+        """Read the Header Entries"""
+        num_header_fields = _api.get_num_header_fields(self.__file_handle)
+        return _api.get_header_fields(self.__file_handle, 0, num_header_fields)
+
+    @property
+    def markers(self) -> List[MarkerEvent]:
+        """Get all available markers"""
+        num_markers = _api.get_num_markers(self.__file_handle)
+        return _api.get_markers(self.__file_handle, 0, num_markers)
+
+    @property
+    def measurement_duration(self) -> float:
+        """Get the duration of the measurement in seconds"""
+        for marker in self.markers:
+            if marker.source == MarkerEventSource.SOURCE_MANUAL and marker.type == MarkerEventType.STOP:
+                return marker.time
+
+        raise RuntimeError("Cannot determine the length of the measurement")
+
+    @property
+    def version(self) -> Version:
+        """Get dmd reader dll version"""
+        return _api.get_version()
+
     def close(self) -> None:
         """Close DMD file"""
         _api.close_file(self.__file_handle)
 
-    def __gather_usable_channels(self, ch_names):
-        if type(ch_names) is str:
-            ch_names = [ch_names] # convert single channel to list
-
-        used_channels = []
-        sample_rate = None
-        for ch_name in ch_names:
-            self.__check_channel(ch_name)
-            ch_config = self.__channels[ch_name]
-
-            if ch_config.raw_sample_type != SampleType.INVALID:
-                used_channels.append(ch_name)
-            
-            if sample_rate is None:
-                sample_rate = ch_config.sample_rate
-            else:
-                if sample_rate != ch_config.sample_rate:
-                    raise RuntimeError("All requested channels need to have the same sample rate")
-
-        return used_channels
-
-    def read_dataframe(self,
-        ch_names,
-        start_time:float = 0, end_time:float = None,
+    def read_dataframe(
+        self,
+        ch_names: Union[List[str], str],
+        start_time: float = 0.0,
+        end_time: Optional[float] = None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> pd.DataFrame:
         """
         Read all data from specified channels (single name or list of names).
         Each channel will be stored in a column of a pandas DataFrame with a common timestamp index.
-        By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples within that inverval are returned
+        By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples
+        within that inverval are returned
         By default timestamps in seconds relative to recording start are returned:
             - TimestampFormat.NONE -> no timestamp information is stored in the data frame
-            - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
-            - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded timezone timestamps
+            - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone
+              timestamps
+            - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded
+              timezone timestamps
         """
-
         used_channels = self.__gather_usable_channels(ch_names)
 
-        if len(used_channels) == 0:
+        if not used_channels:
             return pd.DataFrame()
 
-        data_frame = None
+        data_frames = []
         for ch_name in used_channels:
             ch_config = self.__channels[ch_name]
 
-            if start_time == 0 and end_time == None:
+            if start_time == 0.0 and end_time is None:
                 timestamps, data = self.__get_all_sweeps(ch_config)
             else:
                 timestamps, data = self.__get_ranged_sweeps(ch_config, start_time, end_time)
-            
-            if data_frame is None:
-                if timestamp_format == TimestampFormat.NONE:
-                    data_frame = pd.DataFrame()
-                else:
-                    data_frame = pd.DataFrame(index=timestamps)
-            else:
-                if timestamp_format != TimestampFormat.NONE and not np.array_equal(data_frame.index, timestamps):
-                    raise RuntimeError("Cannot combine channels with different timestamps. Try fetching data for each channel individually.")
+
+            if timestamp_format == TimestampFormat.NONE:
+                timestamps = None
 
             if ch_config.max_sample_dimension == 1:
-                data_frame[ch_name] = data
+                columns = [ch_name]
             else:
-                if ch_config.max_sample_dimension == len(data):
-                    columns = ["{}[{}]".format(ch_name, i) for i in range(0, ch_config.max_sample_dimension)]
+                data = data.reshape(-1, ch_config.max_sample_dimension)
+                columns = [f"{ch_name}[{i}]" for i in range(0, ch_config.max_sample_dimension)]
 
-                    #TODO: This code is untested
-                    raise NotImplemented("The following code has not been tested and therefore raises an exception for now")
-                    data = data.reshape(1, ch_config.max_sample_dimension)
-                    if timestamp_format == TimestampFormat.NONE:
-                        data_frame = pd.DataFrame(data=data, columns=columns)
-                    else:
-                        timestamps = timestamps.reshape(1, len(timestamps))
-                        data_frame = pd.DataFrame(index=timestamps, data=data, columns=columns)
+            data_frames.append(pd.DataFrame(data, index=timestamps, columns=columns))
 
-                    #new_data = np.concatenate((timestamps, data), axis=1)
-                    #new_data = new_data.reshape(1, ch_config.max_sample_dimension + 1)
-                    #data_frame = pd.DataFrame(new_data, columns=columns)
-                else:
-                    if data_frame is None:
-                        data_frame = pd.DataFrame(index=timestamps)
-                    for i in range(0, ch_config.max_sample_dimension):
-                        data_frame["{}[{}]".format(ch_name, i)] = data[i::ch_config.max_sample_dimension]
+        full_frame = pd.concat(data_frames, axis=1)
 
-        if (timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or
-            timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME):
-            data_frame = self.__get_data_abs_timestamp_pandas(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
-
-        return data_frame
+        if timestamp_format in [
+            TimestampFormat.ABSOLUTE_LOCAL_TIME,
+            TimestampFormat.ABSOLUTE_UTC_TIME,
+        ]:
+            full_frame = self.__get_data_abs_timestamp_pandas(
+                full_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME
+            )
+        return full_frame
     
-    def read_array(self,
-        ch_names,
-        start_time:float = 0, end_time:float = None,
+    def read_array(
+        self,
+        ch_names: Union[List[str], str],
+        start_time: float = 0.0,
+        end_time: Optional[float] = None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
-    ) -> Tuple[np.array, np.array]:
+    ) -> Tuple[Optional[np.array], Optional[np.array]]:
         """
         Read all data from specified channels (single name or list of names).
-        Each channel will be stored in a row of a numpy data array. A separate timestamp array will contain the timestamps.
-        By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples within that inverval are returned
+        Each channel will be stored in a row of a numpy data array. A separate timestamp array will contain the
+        timestamps.
+        By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples
+        within that inverval are returned
         By default timestamps in seconds relative to recording start are returned:
             - TimestampFormat.NONE -> no timestamp information is stored in the data frame
-            - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone timestamps
-            - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded timezone timestamps
+            - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone
+              timestamps
+            - TimestampFormat.ABSOLUTE_LOCAL_TIME -> relative timestamps are replaced with absolute local recorded
+              timezone timestamps
         """
         used_channels = self.__gather_usable_channels(ch_names)
 
-        if len(used_channels) == 0:
+        if not used_channels:
             return None, None
         
         result = np.array([])
@@ -149,7 +154,7 @@ class DmdReader:
         for ch_name in used_channels:
             ch_config = self.__channels[ch_name]
 
-            if start_time == 0 and end_time == None:
+            if start_time == 0.0 and end_time is None:
                 timestamps, data = self.__get_all_sweeps(ch_config)
             else:
                 timestamps, data = self.__get_ranged_sweeps(ch_config, start_time, end_time)
@@ -159,27 +164,36 @@ class DmdReader:
                     result_timestamps = timestamps
             else:
                 if timestamp_format != TimestampFormat.NONE and not np.array_equal(result_timestamps, timestamps):
-                    raise RuntimeError("Cannot combine channels with different timestamps. Try fetching data for each channel individually.")
+                    raise RuntimeError(
+                        "Cannot combine channels with different timestamps. "
+                        "Try fetching data for each channel individually."
+                    )
 
             if ch_config.max_sample_dimension == 1:
-                if len(result) == 0:
+                if result.size == 0:
                     result = data
                 else:
                     result = np.vstack([result, data])
             else:
                 for i in range(0, ch_config.max_sample_dimension):
-                    if len(result) == 0:
+                    if result.size == 0:
                         result = data[i::ch_config.max_sample_dimension]
                     else:
                         result = np.vstack([result, data[i::ch_config.max_sample_dimension]])
 
-        if (timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or
-            timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME):
-            result_timestamps = self.__get_data_abs_timestamp_array(result_timestamps, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
+        if timestamp_format in [
+            TimestampFormat.ABSOLUTE_LOCAL_TIME,
+            TimestampFormat.ABSOLUTE_UTC_TIME,
+        ]:
+            result_timestamps = self.__get_data_abs_timestamp_array(
+                result_timestamps, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME
+            )
 
         return result, result_timestamps
 
-    def read_reduced(self, ch_name, timestamp_format = TimestampFormat.SECONDS_SINCE_START) -> pd.DataFrame:
+    def read_reduced(
+        self, ch_name: str, timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
+    ) -> pd.DataFrame:
         """
         Read the reduced data from the given channel
 
@@ -216,48 +230,40 @@ class DmdReader:
             data_frame[DataFrameColumn.DATA_FRAME_COLUMN_REDUCED_AVG] = data[2::4]
             data_frame[DataFrameColumn.DATA_FRAME_COLUMN_REDUCED_RMS] = data[3::4]
 
-            if timestamp_format == TimestampFormat.ABSOLUTE_LOCAL_TIME or timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME:
-                data_frame = self.__get_data_abs_timestamp_pandas(data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME)
-
+            if timestamp_format in [
+                TimestampFormat.ABSOLUTE_LOCAL_TIME,
+                TimestampFormat.ABSOLUTE_UTC_TIME,
+            ]:
+                data_frame = self.__get_data_abs_timestamp_pandas(
+                    data_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME
+                )
             return data_frame
         else:
-            raise NotImplementedError("Sampletype {} not supported for reduced data".format(ch_config.reduced_sample_type))
+            raise NotImplementedError(
+                f"Sampletype {ch_config.reduced_sample_type} not supported for reduced data"
+            )
 
-    @property
-    def channels(self):
-        """Channel definitions"""
-        return self.__channels
+    def __gather_usable_channels(self, ch_names: Union[List[str], str]) -> List[str]:
+        if isinstance(ch_names, str):
+            # Convert single channel to list
+            ch_names = [ch_names]
 
-    @property
-    def channel_names(self):
-        """Alphabetically sorted list of channel names"""
-        return sorted(self.__channels.keys())
+        used_channels = []
+        sample_rate = None
+        for ch_name in ch_names:
+            self.__check_channel(ch_name)
+            ch_config = self.__channels[ch_name]
 
-    @property
-    def headers(self) -> List[HeaderField]:
-        """Read the Header Entries"""
-        num_header_fields = _api.get_num_header_fields(self.__file_handle)
-        return _api.get_header_fields(self.__file_handle, 0, num_header_fields)
+            if ch_config.raw_sample_type != SampleType.INVALID:
+                used_channels.append(ch_name)
 
-    @property
-    def markers(self) -> List[MarkerEvent]:
-        """Get all available markers"""
-        num_markers = _api.get_num_markers(self.__file_handle)
-        return _api.get_markers(self.__file_handle, 0, num_markers)
+            if sample_rate is None:
+                sample_rate = ch_config.sample_rate
+            else:
+                if sample_rate != ch_config.sample_rate:
+                    raise RuntimeError("All requested channels need to have the same sample rate")
 
-    @property
-    def measurement_duration(self) -> float:
-        """Get the duration of the measurement in seconds"""
-        for marker in self.markers:
-            if marker.source == MarkerEventSource.SOURCE_MANUAL and marker.type == MarkerEventType.STOP:
-                return marker.time
-        
-        raise RuntimeError("Cannot determine the length of the measurement")
-
-    @property
-    def version(self) -> Version:
-        """Get dmd reader dll version"""
-        return _api.get_version()
+        return used_channels
 
     def __get_channel_infos(self) -> Dict[str, ChannelConfig]:
         """Read all channel infos"""
@@ -285,17 +291,17 @@ class DmdReader:
                 ch_config.reduced_sweeps = _api.get_reduced_sweeps(channel_handle, 0, num_reduced_sweeps)
 
             if ch_config.name in channels:
-                raise KeyError("Duplicate channel name: {}".format(ch_config.name))
+                raise KeyError(f"Duplicate channel name: {ch_config.name}")
 
             channels[ch_config.name] = ch_config
         return channels
 
-    def __check_channel(self, ch_name) -> None:
+    def __check_channel(self, ch_name: str) -> None:
         """Check if given ch_name is available"""
         if ch_name not in self.__channels:
-            raise KeyError("No channel with given name ({}) can be found".format(ch_name))
+            raise KeyError(f"No channel with given name ({ch_name}) can be found")
 
-    def __get_all_sweeps(self, ch_config) -> Tuple[np.ndarray, np.ndarray]:
+    def __get_all_sweeps(self, ch_config: ChannelConfig) -> Tuple[np.ndarray, np.ndarray]:
         """Get data from all sweeps of given ch_name"""
         data = np.array([], dtype=ch_config.dtype)
         timestamps = np.array([], dtype="float64")
@@ -319,10 +325,12 @@ class DmdReader:
 
         return timestamps, data
 
-    def __get_ranged_sweeps(self, ch_config, start_time, end_time) -> Tuple[np.array, np.array]:
+    def __get_ranged_sweeps(
+        self, ch_config: ChannelConfig, start_time: float, end_time: float
+    ) -> Tuple[np.array, np.array]:
         actual_end_time = end_time if end_time is not None else ch_config.sweeps[-1].end_time
 
-        timestamps = np.array([], dtype='float64')
+        timestamps = np.array([], dtype="float64")
         data = np.array([])
         
         # Get data from suitable sweeps
@@ -352,7 +360,9 @@ class DmdReader:
                         else:
                             block_max_samples = last_sample - first_sample + 1
 
-                        raw_timestamps, raw_values, next_sample = self.__get_single_sweep(ch_config, first_sample, block_max_samples)
+                        raw_timestamps, raw_values, next_sample = self.__get_single_sweep(
+                            ch_config, first_sample, block_max_samples
+                        )
                         
                         if len(raw_timestamps) > 0:
                             if raw_timestamps[-1] <= actual_end_time:
@@ -369,7 +379,9 @@ class DmdReader:
         return timestamps, data
 
     @staticmethod
-    def __get_single_sweep(ch_config, first_sample, max_samples) -> Tuple[np.ndarray, np.ndarray, int]:
+    def __get_single_sweep(
+        ch_config: ChannelConfig, first_sample: int, max_samples: int
+    ) -> Tuple[np.ndarray, np.ndarray, int]:
         """Get data for given sweep of given channel"""
         timestamps_dtype = "float64"
         if ch_config.raw_sample_type == SampleType.DOUBLE:
@@ -400,7 +412,7 @@ class DmdReader:
                 ch_config.max_sample_dimension
             )
         else:
-            raise NotImplementedError("Sampletype {} not supported".format(ch_config.raw_sample_type))
+            raise NotImplementedError(f"Sampletype {ch_config.raw_sample_type} not supported")
 
         timestamps = np.frombuffer(raw_timestamps, dtype=timestamps_dtype, count=num_valid_samples)
         data = np.frombuffer(raw_values, dtype=ch_config.dtype, count=num_valid_samples*ch_config.max_sample_dimension)
@@ -408,9 +420,10 @@ class DmdReader:
         return timestamps, data, next_sample
 
     @staticmethod
-    def __get_corrected_sample_count(sweep, start_sample, end_sample = None) -> Tuple[int, int]:
+    def __get_corrected_sample_count(
+        sweep: "Sweep", start_sample: int, end_sample: Optional[float] = None
+    ) -> Tuple[int, int]:
         """Get a corrected first_sample and max_sample value"""
-
         # TODO: This is a hack, is there a better way to find out the start-offset
         start_offset = int(sweep.first_sample - sweep.start_time * sweep.sample_frequency)
 
@@ -425,27 +438,27 @@ class DmdReader:
         return start_sample, end_sample - start_sample + 1
 
     @staticmethod
-    def __check_sweep_number(ch_config, sweep_no) -> None:
+    def __check_sweep_number(ch_config: ChannelConfig, sweep_no: int) -> None:
         """Check if given sweep number is valid for given ch_config"""
         if not(0 <= sweep_no < len(ch_config.sweeps)):
-            raise IndexError("Selected sweep number {} not valid. Valid range: 0 .. {}".format(
-                sweep_no, len(ch_config.sweeps)-1)
+            raise IndexError(
+                f"Selected sweep number {sweep_no} not valid. Valid range: 0 .. {len(ch_config.sweeps) - 1}"
             )
 
     @staticmethod
-    def __load_file(file_name):
+    def __load_file(file_name: str) -> "c_void_p":
         """Open the dmd file"""
         return _api.open_file(file_name)
 
-    def __get_data_abs_timestamp_pandas(self, data_frame, utc=True) -> pd.DataFrame:
+    def __get_data_abs_timestamp_pandas(self, data_frame, utc: bool = True) -> pd.DataFrame:
         """Convert Timestamp column to absolute timestamps"""
         start_time = self.measurement_start_time_utc if utc else self.measurement_start_time_local
-        data_frame.index = start_time + pd.to_timedelta(data_frame.index, unit='s')
+        data_frame.index = start_time + pd.to_timedelta(data_frame.index, unit="s")
         return data_frame
     
-    def __get_data_abs_timestamp_array(self, timestamps, utc=True) -> np.array:
+    def __get_data_abs_timestamp_array(self, timestamps: np.ndarray, utc: bool = True) -> np.array:
         """Convert Timestamp column to absolute timestamps"""
         start_time = self.measurement_start_time_utc if utc else self.measurement_start_time_local
         start_time_np = (start_time + start_time.utcoffset()).to_datetime64()
-        timestamps = start_time_np + np.timedelta64(1, 's') * timestamps
+        timestamps = start_time_np + np.timedelta64(1, "s") * timestamps
         return timestamps

@@ -1,11 +1,15 @@
 """
-Copyright DEWETRON GmbH 2019
+Copyright DEWETRON GmbH 2021
 
 Dmd reader library - Channel configuration module
 """
 
 
 from .types import SampleType
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ctypes import c_void_p
+    from .data_types import ChannelInformation
 
 
 class ChannelConfig:
@@ -25,7 +29,7 @@ class ChannelConfig:
     sweeps = []
     reduced_sweeps = []
 
-    def __init__(self, channel_info, channel_handle):
+    def __init__(self, channel_info: "ChannelInformation", channel_handle: "c_void_p"):
         self.__dict__.update(channel_info.__dict__)
         self.handle = channel_handle
 
@@ -43,4 +47,4 @@ class ChannelConfig:
         return ""
 
     def __str__(self):
-        return "{} ({} Hz) - {}".format(self.name, self.sample_rate, self.type)
+        return f"{self.name} ({self.sample_rate} Hz) - {self.type}"

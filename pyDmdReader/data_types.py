@@ -1,5 +1,5 @@
 """
-Copyright DEWETRON GmbH 2019
+Copyright DEWETRON GmbH 2021
 
 Dmd reader library - Module for all accessible data types returned by DmdReader functions
 """
@@ -8,11 +8,15 @@ Dmd reader library - Module for all accessible data types returned by DmdReader 
 import pandas as pd
 from datetime import timezone, timedelta
 from .types import MarkerEventSource, MarkerEventType, ChannelType
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ._structures import DmdTimestampUtc, DmdHeaderField, DmdChannelInformation, DmdMarkerEvent, DmdSweep, \
+        DmdStructures
 
 
 class _ConverterBase:
     """Base class"""
-    def __init__(self, structure):
+    def __init__(self, structure: "DmdStructures"):
         for field in structure._fields_:
             field_name = field[0]
             field_value = getattr(structure, field_name)
@@ -34,7 +38,7 @@ class DateTimeZone(_ConverterBase):
     time_offset = None
     valid = None
 
-    def __init__(self, structure):
+    def __init__(self, structure: "DmdTimestampUtc"):
         _ConverterBase.__init__(self, structure)
 
     @property
@@ -57,7 +61,7 @@ class HeaderField(_ConverterBase):
     name = None
     value = None
 
-    def __init__(self, structure):
+    def __init__(self, structure: "DmdHeaderField"):
         _ConverterBase.__init__(self, structure)
 
 
@@ -80,7 +84,7 @@ class ChannelInformation(_ConverterBase):
     # Maximum range of the channel's sample data. Specified in the physical unit of the channel
     range_max = None
 
-    def __init__(self, structure):
+    def __init__(self, structure: "DmdChannelInformation"):
         _ConverterBase.__init__(self, structure)
         self.type = ChannelType(self.type)
 
@@ -92,7 +96,7 @@ class MarkerEvent(_ConverterBase):
     time = None
     text = None
 
-    def __init__(self, structure):
+    def __init__(self, structure: "DmdMarkerEvent"):
         _ConverterBase.__init__(self, structure)
         self.source = MarkerEventSource(self.source)
         self.type = MarkerEventType(self.type)
@@ -111,7 +115,7 @@ class Sweep(_ConverterBase):
         """Calculated max samples"""
         return self.last_sample - self.first_sample + 1
 
-    def __init__(self, structure):
+    def __init__(self, structure: "DmdSweep"):
         _ConverterBase.__init__(self, structure)
 
 
@@ -125,4 +129,4 @@ class Version:
         self.minor = minor
 
     def __repr__(self):
-        return "{} (major: {}, minor: {})".format(self.__class__.__name__, self.major, self.minor)
+        return f"{self.__class__.__name__} (major: {self.major}, minor: {self.minor})"

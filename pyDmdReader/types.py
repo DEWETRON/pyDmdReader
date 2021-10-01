@@ -1,5 +1,5 @@
 ﻿"""
-Copyright DEWETRON GmbH 2019
+Copyright DEWETRON GmbH 2021
 
 Dmd reader library - Module for all available enums
 """
@@ -7,6 +7,14 @@ Dmd reader library - Module for all available enums
 
 from enum import Enum
 from typing import List
+
+
+class TimestampFormat(Enum):
+    """Specification of all possible timestamp formats"""
+    NONE = 0
+    SECONDS_SINCE_START = 1
+    ABSOLUTE_LOCAL_TIME = 2
+    ABSOLUTE_UTC_TIME = 3
 
 
 class ErrorCode(Enum):

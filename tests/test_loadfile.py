@@ -3,12 +3,16 @@ Copyright DEWETRON GmbH 2021
 
 Dmd reader library - Unit Tests
 """
+
+
+import os
 from pyDmdReader.types import MarkerEventSource, MarkerEventType
 from pyDmdReader import DmdReader
-import os.path
 
-SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data/simple.dmd")
-INTERNAL_DMD = 'DMD_DEMO_FILE'
+
+SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data", "simple.dmd")
+INTERNAL_DMD = "DMD_DEMO_FILE"
+
 
 def test_check_version():
     dmd = DmdReader(SIMPLE_DMD)
@@ -17,18 +21,21 @@ def test_check_version():
     assert version.minor == 1
     dmd.close()
 
+
 def test_check_channelnames():
     dmd = DmdReader(SIMPLE_DMD)
     names = dmd.channel_names
     assert len(names) == 10
-    assert names[0] == 'AI 1/I1 Sim'
+    assert names[0] == "AI 1/I1 Sim"
     dmd.close()
+
 
 def test_headers():
     dmd = DmdReader(SIMPLE_DMD)
     headers = dmd.headers
     assert len(headers) == 0
     dmd.close()
+
 
 def test_markers():
     dmd = DmdReader(SIMPLE_DMD)
