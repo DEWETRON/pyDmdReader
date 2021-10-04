@@ -2,7 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.0] - unreleased
+## [0.2.0] - 2021-10-04
+
 ### Changed
 - Python code cleanup
 
