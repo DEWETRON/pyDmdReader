@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2021-12-13
+
+### Changed
+- Updated Windows binaries for Oxygen 6.0 compatibility (no change in the python library)
+
 ## [0.2.0] - 2021-10-04
 
 ### Changed
