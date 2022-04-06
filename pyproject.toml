@@ -1,14 +1,6 @@
-[build-system]
-requires = [
-    "wheel",
-    "setuptools",
-    "numpy>=1.21.0",
-    "pandas>=1.3.0",
-]
-
 [project]
-id = "com.deweton.pydmdreader"
 name = "pyDmdReader"
+description = "Python module to read Dewetron Oxygen DMD files"
 version = "0.4.0"
 license = {file = "LICENSE"}
 
@@ -36,7 +28,6 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
 ]
-dynamic = ['version', 'description']
 
 [project.urls]
 homepage = "https://www.dewetron.com/"
@@ -44,3 +35,11 @@ documentation = "https://github.com/DEWETRON/pyDmdReader/wiki"
 source = "https://github.com/DEWETRON/pyDmdReader"
 download = "https://github.com/DEWETRON/pyDmdReader/releases"
 tracker = "https://github.com/DEWETRON/pyDmdReader/issues"
+
+[build-system]
+requires = [
+    "wheel",
+    "setuptools",
+    "numpy>=1.21.0",
+    "pandas>=1.3.0",
+]

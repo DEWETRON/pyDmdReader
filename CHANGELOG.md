@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.4.0] - 2022-04-06
 
 ### Changed
+- Fixed pyproject.toml to be used with recent pip install versions
 - Updated Windows binaries for Oxygen 6.1 compatibility (no change in the python library)
 
 ## [0.3.0] - 2021-12-13
