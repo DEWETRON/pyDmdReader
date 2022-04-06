@@ -1,6 +1,11 @@
-# Changelog
+# Change Log
 
 All notable changes to this project will be documented in this file.
+
+## [0.4.0] - 2022-04-06
+
+### Changed
+- Updated Windows binaries for Oxygen 6.1 compatibility (no change in the python library)
 
 ## [0.3.0] - 2021-12-13
 

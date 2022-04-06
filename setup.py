@@ -1,5 +1,5 @@
 """
-Copyright DEWETRON GmbH 2021
+Copyright DEWETRON GmbH 2022
 
 Dmd reader library - Setup Tools Definition
 """
@@ -10,7 +10,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pyDmdReader",
-    version="0.3.0",
+    version="0.4.0",
     author="Matthias Straka",
     author_email="matthias.straka@dewetron.com",
     description="Python module to read Dewetron Oxygen DMD files",

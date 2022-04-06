@@ -13,33 +13,32 @@ Direct integration into the Python Package Index is planned in the future.
 The pyDmdReader python package can be installed with
 
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.3.0.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.4.0.tar.gz
 ```
 
 Windows binaries (DMD reader DLLs) are installed automatically.
 
-## Debian Buster 
+## Linux
 
-Currently, we support pyDmdReader for Linux on Debian 10 Buster.
+Currently, we support pyDmdReader for Linux on Debian 10 Buster and Ubuntu 20.04 Focal.
 Each Linux distribution requires a separate rpm package to ensure no broken dependencies.
-Contact Dewetron if you need support for another distribution.
+Contact Dewetron if you need support for another distribution or version.
 
-For Debian Buster, download and install the dmdreader package `dewetron-dmd-reader-api_5.6.0-buster_amd64.deb` from the [current release](https://github.com/DEWETRON/pyDmdReader/releases/latest) page.
-
-Installation is done using:
+The dmdreader packages can be found on the [current release](https://github.com/DEWETRON/pyDmdReader/releases/latest) page.
+They need to be installed manually using the following command (adapt the filename to the one downloaded from the current release):
 
 ```
-sudo apt install ./dewetron-dmd-reader-api_5.6.0-buster_amd64.deb
+sudo apt install ./dewetron-dmd-reader-api_6.0.0-buster_amd64.deb
 ```
 
 Now install pyDmdReader:
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.3.0.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.4.0.tar.gz
 ```
 
 If pip fails, please try manual installation:
 
-You have to fullfill other py library dependencies:
+You have to fullfill other python library dependencies:
 
 ```
 pip3 install pandas
@@ -47,7 +46,7 @@ pip3 install pandas
 
 or run
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 This will automatically install numpy, which is also needed.
@@ -77,7 +76,7 @@ dmd_file.close()
 
 If you want to try out the DMD Reader and have no DMD files at hand, feel free to use example files from the [tests/data](https://github.com/DEWETRON/pyDmdReader/tree/main/tests/data) directory.
 
-This repository comes with pytest compatible unit tests which can be started by calling `pytest` from the root directoty of the repository.
+This repository comes with pytest compatible unit tests which can be started by calling `pytest` (or `python -m pytest`) from the root directoty of the repository.
 
 
 # Contact
@@ -90,7 +89,7 @@ For technical or other DMD reader related questions please contact:
 # License
 MIT License
 
-Copyright (c) 2021 DEWETRON
+Copyright (c) 2021-2022 DEWETRON
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
