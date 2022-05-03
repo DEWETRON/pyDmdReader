@@ -1,5 +1,5 @@
 """
-Copyright DEWETRON GmbH 2021
+Copyright DEWETRON GmbH 2022
 
 Python module to read Dewetron Oxygen DMD files
 
@@ -10,8 +10,8 @@ dmd_file.close()
 """
 
 
-__copyright__ = "Copyright 2021 DEWETRON GmbH"
-__version__ = "0.2.0"
+__copyright__ = "Copyright 2022 DEWETRON GmbH"
+__version__ = "0.4.0"
 
 
 __all__ = [
