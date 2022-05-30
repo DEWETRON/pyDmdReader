@@ -25,6 +25,9 @@ print("Measurement start time (utc): {}".format(dmd_file.measurement_start_time_
 print("Local measurement start time: {}".format(dmd_file.measurement_start_time_local))
 print("Duration of the measurement: {:.4} seconds".format(dmd_file.measurement_duration))
 
+if dmd_file.version.supports(1,2):
+    print("Config: " + dmd_file.configuration_xml)
+
 print("Channels:")
 channel_names = dmd_file.channel_names
 print("All accessible channel names: {}".format(channel_names))

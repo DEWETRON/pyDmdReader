@@ -5,6 +5,7 @@ Dmd reader library - Module for all accessible data types returned by DmdReader 
 """
 
 
+from functools import total_ordering
 import pandas as pd
 from datetime import timezone, timedelta
 from .types import MarkerEventSource, MarkerEventType, ChannelType
@@ -118,7 +119,7 @@ class Sweep(_ConverterBase):
     def __init__(self, structure: "DmdSweep"):
         _ConverterBase.__init__(self, structure)
 
-
+@total_ordering
 class Version:
     """Describes the dll version"""
     major = None
@@ -130,3 +131,20 @@ class Version:
 
     def __repr__(self):
         return f"{self.__class__.__name__} (major: {self.major}, minor: {self.minor})"
+
+    def supports(self, ma, mi):
+        return self.major == ma and self.minor >= mi
+
+    def __eq__(self, o):
+        return self.major == o.major and self.minor == o.minor
+
+    def __ne__(self, o):
+        return self.major != o.major or self.minor != o.minor
+
+    def __lt__(self, o):
+        if self.major < o.major:
+            return True
+        elif self.major > o.major:
+            return False
+        else:
+            return self.minor < o.minor

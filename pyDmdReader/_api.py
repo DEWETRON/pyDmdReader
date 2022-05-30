@@ -46,6 +46,7 @@ _DMDReader_GetNumDataSweeps: Optional[type] = None
 _DMDReader_GetDataSweeps: Optional[type] = None
 _DMDReader_GetNumReducedSweeps: Optional[type] = None
 _DMDReader_GetReducedSweeps: Optional[type] = None
+_DMDReader_GetConfigurationXML: Optional[type] = None
 
 
 def _check_loaded(func):
@@ -455,3 +456,13 @@ def get_reduced_sweeps(channel_handle: c_void_p, first_reduced_sweep: int, max_r
     )
     _check_error(error_code)
     return [Sweep(reduced_sweeps[i]) for i in range(0, num_reduced_sweeps.value)]
+
+@_check_loaded
+def get_configuration_xml(file_handle: c_void_p) -> str:
+    """DMD Reader API Get the file configuration"""
+    config = c_char_p()
+    error_code = _DMDReader_GetConfigurationXML(file_handle, byref(config))
+    _check_error(error_code)
+    #s = ctypes.cast(config, ctypes.c_char_p).value
+    return config.value
+

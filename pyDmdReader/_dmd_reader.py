@@ -5,6 +5,7 @@ DMD reader library - Main class
 """
 
 
+import xml.etree.ElementTree as et
 import numpy as np
 import pandas as pd
 from . import _api
@@ -59,6 +60,18 @@ class DmdReader:
                 return marker.time
 
         raise RuntimeError("Cannot determine the length of the measurement")
+
+    @property
+    def configuration_xml(self) -> str:
+        """Get the configuration to the dmd"""
+        config = _api.get_configuration_xml(self.__file_handle)
+        return config.decode("utf-8")
+
+    @property
+    def configuration_etree(self) -> str:
+        """Get the configuration to the dmd"""
+        config = self.configuration_xml
+        return et.fromstring(config)
 
     @property
     def version(self) -> Version:

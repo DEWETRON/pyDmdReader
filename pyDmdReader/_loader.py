@@ -9,6 +9,7 @@ import os
 import sys
 from ctypes import cdll
 from . import _api
+from .data_types import Version
 from typing import List
 
 
@@ -16,11 +17,11 @@ _g_dmd_reader_api_dll = None
 
 
 def _get_exposed_dmd_functions() -> List[str]:
-    """Return a list of fucntions available in the dmd reader dll"""
+    """Return a list of functions available in the dmd reader dll"""
     return [
         # Common
-        "DMDReader_GetVersion",
-        "DMDReader_Initialize",
+        #"DMDReader_GetVersion",
+        #"DMDReader_Initialize",
         "DMDReader_Dispose",
         "DMDReader_OpenFile",
         "DMDReader_CloseFile",
@@ -47,17 +48,18 @@ def _get_exposed_dmd_functions() -> List[str]:
         "DMDReader_GetDataSweeps",
         "DMDReader_GetNumReducedSweeps",
         "DMDReader_GetReducedSweeps",
+        ("DMDReader_GetConfigurationXML", Version(1, 2)),
     ]
 
 
 class ApiLoader:
-    """Dmd raeder API loader class"""
+    """Dmd reader API loader class"""
     def __init__(self, filename):
         try:
             global _g_dmd_reader_api_dll
 
             # Load the dmd reader dll
-            if sys.platform.startswith("win"):                
+            if sys.platform.startswith("win"):
                 dll_file_paths = [os.path.join(os.path.dirname(__file__), "bin", filename)]
             else:
                 dll_file_paths = [
@@ -73,11 +75,20 @@ class ApiLoader:
                 except FileNotFoundError:
                     pass
 
+            for dmd_function in ("DMDReader_GetVersion", "DMDReader_Initialize"):
+                setattr(_api, f"_{dmd_function}", getattr(_g_dmd_reader_api_dll, dmd_function))
+            interface_version = _api.get_version()
+            _api.initialize(1, 0)
+
             # Initialize all dmd reader functions
             for dmd_function in _get_exposed_dmd_functions():
+                req_version = Version(1, 0)
+                if len(dmd_function) == 2:
+                    req_version = dmd_function[1]
+                    if not interface_version.supports(req_version.major, req_version.minor):
+                        continue
+                    dmd_function = dmd_function[0]
                 setattr(_api, f"_{dmd_function}", getattr(_g_dmd_reader_api_dll, dmd_function))
-
-            _api.initialize(1, 0)
 
         except Exception as err:
             raise ImportError(f"DMD reader dll ({filename}) could not be loaded. ({err})")
