@@ -6,28 +6,28 @@ Dmd reader library - Unit Tests
 
 
 import os
+import pytest
 from pyDmdReader.types import MarkerEventSource, MarkerEventType
 from pyDmdReader import DmdReader
 
 
 SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data", "simple.dmd")
+DUPNAMES_DMD = os.path.join(os.path.dirname(__file__), "data", "duplicate_names.dmd")
 INTERNAL_DMD = "DMD_DEMO_FILE"
 
 
 def test_check_version():
-    dmd = DmdReader(SIMPLE_DMD)
-    version = dmd.version
-    assert version.major == 1
-    assert version.minor == 1
-    dmd.close()
+    with DmdReader(SIMPLE_DMD) as dmd:
+        version = dmd.version
+        assert version.major == 1
+        assert version.minor == 1
 
 
 def test_check_channelnames():
-    dmd = DmdReader(SIMPLE_DMD)
-    names = dmd.channel_names
-    assert len(names) == 10
-    assert names[0] == "AI 1/I1 Sim"
-    dmd.close()
+    with DmdReader(SIMPLE_DMD) as dmd:
+        names = dmd.channel_names
+        assert len(names) == 10
+        assert names[0] == "AI 1/I1 Sim"
 
 
 def test_headers():
@@ -50,8 +50,8 @@ def test_markers():
     assert markers[1].source == MarkerEventSource.SOURCE_MANUAL
     assert markers[1].type == MarkerEventType.STOP
     assert markers[1].text == "Recording Stop"
-    assert markers[1].time >= 0.633
+    assert markers[1].time == pytest.approx(0.6331)
 
-    assert round(dmd.measurement_duration, 4) == 0.6331
+    assert dmd.measurement_duration == pytest.approx(0.6331)
 
     dmd.close()

@@ -59,17 +59,24 @@ There are example scripts in the examples subdirectory that show how to read DMD
 ```python
 import pyDmdReader
 
-dmd_file = pyDmdReader.DmdReader('my_recording.dmd')
-print("Channels found in file: {}".format(dmd_file.channel_names))
+dmd = pyDmdReader.DmdReader('my_recording.dmd')
+print("Channels found in file: {}".format(dmd.channel_names))
 
 # Read all data from channel 'AI 1/1'
-data = dmd_file.read_dataframe('AI 1/1')
+data = dmd.read_dataframe('AI 1/1')
 print(data)
 
 # Read data from channel 'AI 1/1' from 1s to 3s after recording start
-data = dmd_file.read_dataframe('AI 1/1', start_time = 1, end_time = 3)
+data = dmd.read_dataframe('AI 1/1', start_time = 1, end_time = 3)
 
-dmd_file.close()
+dmd.close()
+```
+
+It is also possible to scope the DMD reader lifetime to avoid forgetting to call `close()`
+```python
+import pyDmdReader
+with pyDmdReader.DmdReader('name.dmd') as dmd:
+    print("Channels: {}".format(dmd.channel_names))
 ```
 
 ## Testing

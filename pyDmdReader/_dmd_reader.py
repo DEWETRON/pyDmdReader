@@ -30,6 +30,12 @@ class DmdReader:
         self.measurement_start_time_local = _api.get_measurement_start_time(self.__file_handle, utc=False).datetime
         self.__channels = self.__get_channel_infos()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
+
     @property
     def channels(self) -> Dict[str, ChannelConfig]:
         """Channel definitions"""
