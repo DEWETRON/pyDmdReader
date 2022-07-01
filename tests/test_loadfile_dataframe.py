@@ -13,6 +13,7 @@ from pyDmdReader import DmdReader, TimestampFormat
 
 SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data", "simple.dmd")
 SYNCASYNC_DMD = os.path.join(os.path.dirname(__file__), "data", "syncasync.dmd")
+DUPNAMES_DMD = os.path.join(os.path.dirname(__file__), "data", "duplicate_names.dmd")
 INTERNAL_DMD = "DMD_DEMO_FILE"
 
 
@@ -162,8 +163,8 @@ def test_timerange_simple():
 
     data = dmd.read_dataframe(dmd.channel_names[0], start_time=0.1, end_time=0.4, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 3001
-    assert round(data.index[0], 2) == 0.1
-    assert round(data.index[-1], 2) == 0.4
+    assert data.index[0] == pytest.approx(0.1)
+    assert data.index[-1] == pytest.approx(0.4)
 
     dmd.close()
 
@@ -177,17 +178,33 @@ def test_async():
     assert len(all_data_async) == 293
     assert all_data_sync.index[0] == 0
     assert round(all_data_sync.index[-1], 3) == round(dmd.measurement_duration, 3)
-    assert round(all_data_async.index[0], 2) == 0.01 # Async average with 100 Hz
-    assert round(all_data_async.index[-1], 2) == 2.93
+    assert all_data_async.index[0] == pytest.approx(0.01) # Async average with 100 Hz
+    assert all_data_async.index[-1] == pytest.approx(2.93)
 
     rng_data_sync = dmd.read_dataframe(dmd.channel_names[0], start_time=0.5, end_time=1.5)
     rng_data_async = dmd.read_dataframe(dmd.channel_names[1], start_time=0.5, end_time=1.5)
     assert len(rng_data_sync) == 10001
     assert len(rng_data_async) == 101
     
-    assert round(rng_data_sync.index[0], 3) == 0.5
-    assert round(rng_data_sync.index[-1], 3) == 1.5
-    assert round(rng_data_async.index[0], 2) == 0.5
-    assert round(rng_data_async.index[-1], 2) == 1.5
+    assert rng_data_sync.index[0] == pytest.approx(0.5)
+    assert rng_data_sync.index[-1] == pytest.approx(1.5)
+    assert rng_data_async.index[0] == pytest.approx(0.5)
+    assert rng_data_async.index[-1] == pytest.approx(1.5)
+
+    dmd.close()
+
+def test_duplicate_names():
+    dmd = DmdReader(DUPNAMES_DMD)
+    with pytest.raises(KeyError):
+        dmd.read_dataframe(dmd.channel_names[0])
+    df = dmd.read_dataframe(dmd.channel_ids[0:4])
+
+    assert len(df.columns) == 4
+    assert df.columns[0] == "AI 1/1 Sim"
+    assert df.columns[1] == "AI 1/1 Sim"
+    assert df.columns[2] == "XXX"
+    assert df.columns[3] == "XXX"
+
+    assert df.iloc[0,0] != df.iloc[0,1]
 
     dmd.close()

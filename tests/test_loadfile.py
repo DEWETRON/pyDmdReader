@@ -55,3 +55,14 @@ def test_markers():
     assert dmd.measurement_duration == pytest.approx(0.6331)
 
     dmd.close()
+
+def test_duplicate_names():
+    with DmdReader(DUPNAMES_DMD) as dmd:
+        assert len(dmd.channel_names) == 4
+        assert dmd.channel_names[0] == dmd.channel_names[1]
+        assert dmd.channel_names[2] == dmd.channel_names[3]
+        with pytest.raises(KeyError):
+            dmd.channels[dmd.channel_names[0]]
+
+        assert dmd.allchannels[dmd.channel_ids[0]].name == "AI 1/1 Sim"
+        assert dmd.allchannels[dmd.channel_ids[1]].name == "AI 1/1 Sim"

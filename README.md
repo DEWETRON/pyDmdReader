@@ -13,7 +13,7 @@ Direct integration into the Python Package Index is planned in the future.
 The pyDmdReader python package can be installed with
 
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.4.0.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.5.0.tar.gz
 ```
 
 Windows binaries (DMD reader DLLs) are installed automatically.
@@ -33,7 +33,7 @@ sudo apt install ./dewetron-dmd-reader-api_6.0.0-buster_amd64.deb
 
 Now install pyDmdReader:
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.4.0.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.5.0.tar.gz
 ```
 
 If pip fails, please try manual installation:
@@ -51,7 +51,7 @@ pip3 install -r requirements.txt
 
 This will automatically install numpy, which is also needed.
 
-Do NOT install these packages using "apt".
+Do NOT install these packages using `apt`.
 These are outdated and incompatible with pyDmdReader.
 
 # Example usage
@@ -77,6 +77,20 @@ It is also possible to scope the DMD reader lifetime to avoid forgetting to call
 import pyDmdReader
 with pyDmdReader.DmdReader('name.dmd') as dmd:
     print("Channels: {}".format(dmd.channel_names))
+```
+
+## Dealing with duplicate channel names
+When the DMD file has duplicate channel names, it is not possible to read data by using the channel name as a key (this will throw an exception if duplicate names are found).
+Instead, it is possible to access channels by a unique ID.
+```python
+import pyDmdReader
+
+with pyDmdReader.DmdReader('my_recording.dmd') as dmd:
+    print("Channels found in file: {}".format(dmd.channel_names))
+
+    # Read first two channels
+    data = dmd.read_dataframe(dmd.channel_ids[0:2])
+    print(data)
 ```
 
 ## Testing

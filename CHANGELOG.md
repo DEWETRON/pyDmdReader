@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2022-07-01
+
+### Added
+- Support to use DmdReader with the `with` statement
+- Support for loading DMDs with duplicate channel names
+- DmdReader `channel_ids` returns a list of all unique channel IDs
+- DmdReader `allchannels` returns a dictionary of all channels with a unique ID as key
+
+### Changed
+- `read_dataframe`, `read_array` and `read_reduced`  optionally use the unique channel ID (`int`) instead of the channel name (`str`)
+
 ## [0.4.0] - 2022-04-06
 
 ### Changed

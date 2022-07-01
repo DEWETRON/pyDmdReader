@@ -12,6 +12,7 @@ from pyDmdReader import DmdReader, TimestampFormat
 
 
 SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data", "simple.dmd")
+DUPNAMES_DMD = os.path.join(os.path.dirname(__file__), "data", "duplicate_names.dmd")
 INTERNAL_DMD = "DMD_DEMO_FILE"
 
 
@@ -86,4 +87,17 @@ def test_check_multicolumn():
     assert data.dtype is np.dtype("float64")
     assert timestamps.dtype is np.dtype("float64")
     assert timestamps[0] == 0
+    dmd.close()
+
+def test_duplicate_names():
+    dmd = DmdReader(DUPNAMES_DMD)
+    with pytest.raises(KeyError):
+        dmd.read_array(dmd.channel_names[0])
+    data, timestamps = dmd.read_array(dmd.channel_ids[0:4])
+
+    assert len(data) == 4
+    assert data.shape == (4, 208)
+
+    assert data[0][0] != data[1][0]
+
     dmd.close()

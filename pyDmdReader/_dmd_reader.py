@@ -38,13 +38,32 @@ class DmdReader:
 
     @property
     def channels(self) -> Dict[str, ChannelConfig]:
-        """Channel definitions"""
+        """
+        Channel definitions with the channel name as key
+        @raise KeyError: if duplicate names are found
+        """
+        result = {}
+        for key, ch in self.__channels.items():
+            if ch.name in result:
+                raise KeyError(f"Duplicate channel name: {ch.name}")
+            result[ch.name] = ch
+
+        return result
+    
+    @property
+    def allchannels(self) -> Dict[int, ChannelConfig]:
+        """Channel definitions with a unique channel id as key"""
         return self.__channels
 
     @property
     def channel_names(self) -> List[str]:
-        """Alphabetically sorted list of channel names"""
-        return sorted(self.__channels.keys())
+        """Alphabetically sorted list of channel names (including duplicates)"""
+        return sorted([ch.name for key, ch in self.__channels.items()])
+
+    @property
+    def channel_ids(self) -> List[int]:
+        """List of all channel ids"""
+        return list(self.__channels.keys())
 
     @property
     def headers(self) -> List[HeaderField]:
@@ -125,10 +144,10 @@ class DmdReader:
                 timestamps = None
 
             if ch_config.max_sample_dimension == 1:
-                columns = [ch_name]
+                columns = [ch_config.name]
             else:
                 data = data.reshape(-1, ch_config.max_sample_dimension)
-                columns = [f"{ch_name}[{i}]" for i in range(0, ch_config.max_sample_dimension)]
+                columns = [f"{ch_config.name}[{i}]" for i in range(0, ch_config.max_sample_dimension)]
 
             data_frames.append(pd.DataFrame(data, index=timestamps, columns=columns))
 
@@ -145,13 +164,13 @@ class DmdReader:
     
     def read_array(
         self,
-        ch_names: Union[List[str], str],
+        ch_names: Union[List[str], str, List[int], int],
         start_time: float = 0.0,
         end_time: Optional[float] = None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> Tuple[Optional[np.array], Optional[np.array]]:
         """
-        Read all data from specified channels (single name or list of names).
+        Read all data from specified channels (single name/id or list of names/ids).
         Each channel will be stored in a row of a numpy data array. A separate timestamp array will contain the
         timestamps.
         By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples
@@ -211,15 +230,16 @@ class DmdReader:
         return result, result_timestamps
 
     def read_reduced(
-        self, ch_name: str, timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
+        self, ch_name: Union[str, int],
+        timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> pd.DataFrame:
         """
         Read the reduced data from the given channel
 
         Returned DataFrame columns: timestamps, min, max, avg, rms
         """
-        self.__check_channel(ch_name)
-        ch_config = self.__channels[ch_name]
+        ch_id = self.__resolve_channel(ch_name)
+        ch_config = self.__channels[ch_id]
         data = np.array([], dtype="float64")
         timestamps = np.array([], dtype="float64")
 
@@ -262,19 +282,19 @@ class DmdReader:
                 f"Sampletype {ch_config.reduced_sample_type} not supported for reduced data"
             )
 
-    def __gather_usable_channels(self, ch_names: Union[List[str], str]) -> List[str]:
-        if isinstance(ch_names, str):
+    def __gather_usable_channels(self, ch_names: Union[List[str], str, List[int], int]) -> List[str]:
+        if isinstance(ch_names, str) or isinstance(ch_names, int):
             # Convert single channel to list
             ch_names = [ch_names]
 
         used_channels = []
         sample_rate = None
         for ch_name in ch_names:
-            self.__check_channel(ch_name)
-            ch_config = self.__channels[ch_name]
+            ch_id = self.__resolve_channel(ch_name)
+            ch_config = self.__channels[ch_id]
 
             if ch_config.raw_sample_type != SampleType.INVALID:
-                used_channels.append(ch_name)
+                used_channels.append(ch_id)
 
             if sample_rate is None:
                 sample_rate = ch_config.sample_rate
@@ -309,19 +329,36 @@ class DmdReader:
             if num_reduced_sweeps > 0:
                 ch_config.reduced_sweeps = _api.get_reduced_sweeps(channel_handle, 0, num_reduced_sweeps)
 
-            if ch_config.name in channels:
-                raise KeyError(f"Duplicate channel name: {ch_config.name}")
-
-            channels[ch_config.name] = ch_config
+            channels[channel_handle.value] = ch_config
         return channels
 
-    def __check_channel(self, ch_name: str) -> None:
-        """Check if given ch_name is available"""
-        if ch_name not in self.__channels:
-            raise KeyError(f"No channel with given name ({ch_name}) can be found")
+    def __resolve_channel(self, id: Union[str, int]) -> int:
+        """
+        Check if channel with a unique id (int) is available and return the id.
+        Alternatively, the channel name can be used in this query to resolve the id.
+        An exception is thrown if the channel name in not unique.
+        
+        @param id: channel name or unique id
+        @raise KeyError: If the channel is not found, a KeyError is raised.
+        @return: unique id handle of the channel
+        """
+        if isinstance(id, int):
+            if id not in self.__channels:
+                raise KeyError(f"No channel with id ({id}) can be found")
+            return id
+        elif isinstance(id, str):
+            resolved = None
+            for key, ch in self.__channels.items():
+                if ch.name == id:
+                    if resolved:
+                        raise  KeyError(f"Channel with name ({id}) is not unique")
+                    resolved = key
+            if resolved is None:
+                raise  KeyError(f"No channel with given name ({id}) can be found")
+            return resolved
 
     def __get_all_sweeps(self, ch_config: ChannelConfig) -> Tuple[np.ndarray, np.ndarray]:
-        """Get data from all sweeps of given ch_name"""
+        """Get data from all sweeps of given ch_config"""
         data = np.array([], dtype=ch_config.dtype)
         timestamps = np.array([], dtype="float64")
         block_size = 1000000

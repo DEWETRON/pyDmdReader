@@ -1,5 +1,5 @@
 """
-Copyright DEWETRON GmbH 2021
+Copyright DEWETRON GmbH 2022
 
 Dmd reader library - Unit Tests for internal demo DMD datatypes
 """
@@ -69,6 +69,17 @@ def test_check_demo_file():
 
     dmd.close()
 
+def test_check_demo_file_unique_ids():
+    dmd = pyDmdReader.DmdReader(DMD_FILE)
+    assert dmd.version.major == 1 and dmd.version.minor == 1
+
+    assert len(dmd.channel_names) == len(dmd.channel_ids)
+
+    channel = dmd.channels["AI 0/0 (Demo)"]
+    unique_id = channel.handle.value
+    channel2 = dmd.allchannels[unique_id]
+    assert channel.name == channel2.name
+    assert channel == channel2
 
 def test_check_demo_file_multicolumn():
     dmd = pyDmdReader.DmdReader(DMD_FILE)
