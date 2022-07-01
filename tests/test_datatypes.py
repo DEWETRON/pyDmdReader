@@ -89,5 +89,5 @@ def test_check_demo_file_multicolumn():
     assert data.dtypes[0] == "float64"
     assert data.dtypes[1] == "int32"
     assert data.dtypes[2] == "float64"
-    
+
     dmd.close()

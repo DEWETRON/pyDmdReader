@@ -27,7 +27,7 @@ def test_check_timestamp_none():
     data = dmd.read_reduced(dmd.channel_names[0], timestamp_format=TimestampFormat.NONE)
     # No reduced sweeps in simple DMD
     assert data.empty
-    column_names = [c for c in data.columns]
+    column_names = list(data.columns)
     assert len(column_names) == 4
     assert column_names == ["MIN", "MAX", "AVG", "RMS"]
     assert isinstance(data.index, pd.Index)

@@ -28,7 +28,7 @@ def test_check_timestamp_none():
     dmd = DmdReader(INTERNAL_DMD)
     data = dmd.read_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.NONE)
     assert len(data) == 40002
-    column_names = [c for c in data.columns]
+    column_names = data.columns
     assert len(column_names) == 1
     assert column_names[0] == dmd.channel_names[0]
     assert isinstance(data.index, pd.RangeIndex)
@@ -39,7 +39,7 @@ def test_check_timestamp_seconds():
     dmd = DmdReader(INTERNAL_DMD)
     data = dmd.read_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 40002
-    column_names = [c for c in data.columns]
+    column_names = data.columns
     assert len(column_names) == 1
     assert column_names[0] == dmd.channel_names[0]
     assert isinstance(data.index, pd.Float64Index)
@@ -50,7 +50,7 @@ def test_check_timestamp_absolute_local():
     dmd = DmdReader(SIMPLE_DMD)
     data = dmd.read_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_LOCAL_TIME)
     assert len(data) == 6331
-    column_names = [c for c in data.columns]
+    column_names = data.columns
     assert len(column_names) == 1
     assert column_names[0] == dmd.channel_names[0]
     assert isinstance(data.index, pd.DatetimeIndex)
@@ -62,7 +62,7 @@ def test_check_timestamp_absolute_utc():
     dmd = DmdReader(SIMPLE_DMD)
     data = dmd.read_dataframe(dmd.channel_names[0], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME)
     assert len(data) == 6331
-    column_names = [c for c in data.columns]
+    column_names = data.columns
     assert len(column_names) == 1
     assert column_names[0] == dmd.channel_names[0]
     assert isinstance(data.index, pd.DatetimeIndex)
@@ -76,8 +76,7 @@ def test_check_multichannel():
         [dmd.channel_names[0], dmd.channel_names[1]], timestamp_format=TimestampFormat.ABSOLUTE_UTC_TIME
     )
     assert len(data) == 6331
-    column_names = [c for c in data.columns]
-    assert column_names == [dmd.channel_names[0], dmd.channel_names[1]]
+    assert list(data.columns) == [dmd.channel_names[0], dmd.channel_names[1]]
     dmd.close()
 
 
@@ -85,8 +84,7 @@ def test_check_multichannel_notimestamp():
     dmd = DmdReader(SIMPLE_DMD)
     data = dmd.read_dataframe(dmd.channel_names[0:3], timestamp_format=TimestampFormat.NONE)
     assert len(data) == 6331
-    column_names = [c for c in data.columns]
-    assert column_names == dmd.channel_names[0:3]
+    assert list(data.columns) == dmd.channel_names[0:3]
     dmd.close()
 
 
@@ -137,7 +135,7 @@ def test_timerange_end():
     assert isinstance(data.index, pd.Float64Index)
     assert data.index[0] == 1
     assert data.index[-1] == 1.5
-    
+
     dmd.close()
 
 
@@ -185,7 +183,7 @@ def test_async():
     rng_data_async = dmd.read_dataframe(dmd.channel_names[1], start_time=0.5, end_time=1.5)
     assert len(rng_data_sync) == 10001
     assert len(rng_data_async) == 101
-    
+
     assert rng_data_sync.index[0] == pytest.approx(0.5)
     assert rng_data_sync.index[-1] == pytest.approx(1.5)
     assert rng_data_async.index[0] == pytest.approx(0.5)
@@ -197,14 +195,14 @@ def test_duplicate_names():
     dmd = DmdReader(DUPNAMES_DMD)
     with pytest.raises(KeyError):
         dmd.read_dataframe(dmd.channel_names[0])
-    df = dmd.read_dataframe(dmd.channel_ids[0:4])
+    data = dmd.read_dataframe(dmd.channel_ids[0:4])
 
-    assert len(df.columns) == 4
-    assert df.columns[0] == "AI 1/1 Sim"
-    assert df.columns[1] == "AI 1/1 Sim"
-    assert df.columns[2] == "XXX"
-    assert df.columns[3] == "XXX"
+    assert len(data.columns) == 4
+    assert data.columns[0] == "AI 1/1 Sim"
+    assert data.columns[1] == "AI 1/1 Sim"
+    assert data.columns[2] == "XXX"
+    assert data.columns[3] == "XXX"
 
-    assert df.iloc[0,0] != df.iloc[0,1]
+    assert data.iloc[0,0] != data.iloc[0,1]
 
     dmd.close()

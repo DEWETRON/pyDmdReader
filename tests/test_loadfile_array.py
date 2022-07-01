@@ -93,7 +93,7 @@ def test_duplicate_names():
     dmd = DmdReader(DUPNAMES_DMD)
     with pytest.raises(KeyError):
         dmd.read_array(dmd.channel_names[0])
-    data, timestamps = dmd.read_array(dmd.channel_ids[0:4])
+    data, _ = dmd.read_array(dmd.channel_ids[0:4])
 
     assert len(data) == 4
     assert data.shape == (4, 208)

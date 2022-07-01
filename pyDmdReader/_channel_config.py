@@ -38,11 +38,11 @@ class ChannelConfig:
         """Get the numpy dtype according to sample_type"""
         if self.raw_sample_type == SampleType.DOUBLE:
             return "float64"
-        elif self.raw_sample_type == SampleType.SINT32:
+        if self.raw_sample_type == SampleType.SINT32:
             return "i4"
-        elif self.raw_sample_type == SampleType.DOUBLE_VECTOR:
+        if self.raw_sample_type == SampleType.DOUBLE_VECTOR:
             return "float64"
-        elif self.raw_sample_type == SampleType.COMPLEX_VECTOR:
+        if self.raw_sample_type == SampleType.COMPLEX_VECTOR:
             return "complex128"
         return ""
 

@@ -27,7 +27,7 @@ class _ConverterBase:
 
     def __repr__(self):
         return "{} ({})".format(self.__class__.__name__, ", ".join(
-            ["{}: {}".format(key, value) for key, value in self.__dict__.items()])
+            [f"{key}: {value}" for key, value in self.__dict__.items()])
         )
 
 
@@ -144,7 +144,6 @@ class Version:
     def __lt__(self, o):
         if self.major < o.major:
             return True
-        elif self.major > o.major:
+        if self.major > o.major:
             return False
-        else:
-            return self.minor < o.minor
+        return self.minor < o.minor

@@ -23,7 +23,10 @@ class DmdReader:
     def __init__(self, file_name: str):
         """
         Load data file with file_name and retrieve channel informations
-        This works only for unique channel names, otherwise they get overwitten
+
+        Retrive a list of channel ids (`channel_ids`) or names (`channel_names`)
+        and request data from selected channels via `read_dataframe`, `read_array` or `read_reduced`
+        Channels with a unique name can be accessed via channel names
         """
         self.__file_handle = self.__load_file(file_name)
         self.measurement_start_time_utc = _api.get_measurement_start_time(self.__file_handle, utc=True).datetime
@@ -43,13 +46,13 @@ class DmdReader:
         @raise KeyError: if duplicate names are found
         """
         result = {}
-        for key, ch in self.__channels.items():
-            if ch.name in result:
-                raise KeyError(f"Duplicate channel name: {ch.name}")
-            result[ch.name] = ch
+        for _, channel in self.__channels.items():
+            if channel.name in result:
+                raise KeyError(f"Duplicate channel name: {channel.name}")
+            result[channel.name] = channel
 
         return result
-    
+
     @property
     def allchannels(self) -> Dict[int, ChannelConfig]:
         """Channel definitions with a unique channel id as key"""
@@ -161,7 +164,7 @@ class DmdReader:
                 full_frame, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME
             )
         return full_frame
-    
+
     def read_array(
         self,
         ch_names: Union[List[str], str, List[int], int],
@@ -186,7 +189,7 @@ class DmdReader:
 
         if not used_channels:
             return None, None
-        
+
         result = np.array([])
         result_timestamps = None
         for ch_name in used_channels:
@@ -283,7 +286,7 @@ class DmdReader:
             )
 
     def __gather_usable_channels(self, ch_names: Union[List[str], str, List[int], int]) -> List[str]:
-        if isinstance(ch_names, str) or isinstance(ch_names, int):
+        if isinstance(ch_names, (str, int)):
             # Convert single channel to list
             ch_names = [ch_names]
 
@@ -304,12 +307,12 @@ class DmdReader:
 
         return used_channels
 
-    def __get_channel_infos(self) -> Dict[str, ChannelConfig]:
+    def __get_channel_infos(self) -> Dict[int, ChannelConfig]:
         """Read all channel infos"""
         channels = {}
         channel_type = ChannelType.ALL_CHANNELS
         for ch_idx in range(0, _api.get_num_channels(self.__file_handle, ChannelType.ALL_CHANNELS)):
-            channel_handle, ret_num_channels = _api.get_channels(self.__file_handle, channel_type, ch_idx, 1)
+            channel_handle, _ = _api.get_channels(self.__file_handle, channel_type, ch_idx, 1)
             channel_info = _api.get_channel_information(channel_handle)
             ch_config = ChannelConfig(channel_info, channel_handle)
 
@@ -332,30 +335,33 @@ class DmdReader:
             channels[channel_handle.value] = ch_config
         return channels
 
-    def __resolve_channel(self, id: Union[str, int]) -> int:
+    def __resolve_channel(self, channel_id: Union[str, int]) -> int:
         """
         Check if channel with a unique id (int) is available and return the id.
         Alternatively, the channel name can be used in this query to resolve the id.
         An exception is thrown if the channel name in not unique.
-        
-        @param id: channel name or unique id
+
+        @param channel_id: channel name or unique id
         @raise KeyError: If the channel is not found, a KeyError is raised.
         @return: unique id handle of the channel
         """
-        if isinstance(id, int):
-            if id not in self.__channels:
-                raise KeyError(f"No channel with id ({id}) can be found")
-            return id
-        elif isinstance(id, str):
+        if isinstance(channel_id, int):
+            if channel_id not in self.__channels:
+                raise KeyError(f"No channel with id ({channel_id}) can be found")
+            return channel_id
+
+        if isinstance(channel_id, str):
             resolved = None
-            for key, ch in self.__channels.items():
-                if ch.name == id:
+            for key, channel in self.__channels.items():
+                if channel.name == channel_id:
                     if resolved:
-                        raise  KeyError(f"Channel with name ({id}) is not unique")
+                        raise  KeyError(f"Channel with name ({channel_id}) is not unique")
                     resolved = key
             if resolved is None:
-                raise  KeyError(f"No channel with given name ({id}) can be found")
+                raise  KeyError(f"No channel with given name ({channel_id}) can be found")
             return resolved
+
+        raise TypeError("Channel should be referenced with string-name or int-ids")
 
     def __get_all_sweeps(self, ch_config: ChannelConfig) -> Tuple[np.ndarray, np.ndarray]:
         """Get data from all sweeps of given ch_config"""
@@ -388,7 +394,7 @@ class DmdReader:
 
         timestamps = np.array([], dtype="float64")
         data = np.array([])
-        
+
         # Get data from suitable sweeps
         for sweep in ch_config.sweeps:
             if sweep.start_time <= actual_end_time and sweep.end_time >= start_time:
@@ -419,7 +425,7 @@ class DmdReader:
                         raw_timestamps, raw_values, next_sample = self.__get_single_sweep(
                             ch_config, first_sample, block_max_samples
                         )
-                        
+
                         if len(raw_timestamps) > 0:
                             if raw_timestamps[-1] <= actual_end_time:
                                 timestamps = np.r_[timestamps, raw_timestamps]
@@ -496,7 +502,7 @@ class DmdReader:
     @staticmethod
     def __check_sweep_number(ch_config: ChannelConfig, sweep_no: int) -> None:
         """Check if given sweep number is valid for given ch_config"""
-        if not(0 <= sweep_no < len(ch_config.sweeps)):
+        if not 0 <= sweep_no < len(ch_config.sweeps):
             raise IndexError(
                 f"Selected sweep number {sweep_no} not valid. Valid range: 0 .. {len(ch_config.sweeps) - 1}"
             )
@@ -511,7 +517,7 @@ class DmdReader:
         start_time = self.measurement_start_time_utc if utc else self.measurement_start_time_local
         data_frame.index = start_time + pd.to_timedelta(data_frame.index, unit="s")
         return data_frame
-    
+
     def __get_data_abs_timestamp_array(self, timestamps: np.ndarray, utc: bool = True) -> np.array:
         """Convert Timestamp column to absolute timestamps"""
         start_time = self.measurement_start_time_utc if utc else self.measurement_start_time_local

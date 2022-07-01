@@ -314,7 +314,7 @@ def get_samples_and_ts_scalar_vector_seconds(
         c_uint64(max_samples),
         c_uint32(max_sample_dimension),
         byref(samples),
-        byref(timestamps),        
+        byref(timestamps),
         None,
         byref(num_valid_samples),
         byref(next_sample)
@@ -465,4 +465,3 @@ def get_configuration_xml(file_handle: c_void_p) -> str:
     _check_error(error_code)
     #s = ctypes.cast(config, ctypes.c_char_p).value
     return config.value
-
