@@ -81,12 +81,16 @@ def test_check_multichannel():
 
 
 def test_check_multichannel_notimestamp():
-    dmd = DmdReader(SIMPLE_DMD)
-    data = dmd.read_dataframe(dmd.channel_names[0:3], timestamp_format=TimestampFormat.NONE)
-    assert len(data) == 6331
-    assert list(data.columns) == dmd.channel_names[0:3]
-    dmd.close()
+    with DmdReader(SIMPLE_DMD) as dmd:
+        data = dmd.read_dataframe(dmd.channel_names[0:3], timestamp_format=TimestampFormat.NONE)
+        assert len(data) == 6331
+        assert list(data.columns) == dmd.channel_names[0:3]
 
+def test_check_multichannel_notimestamp_max_samples():
+    with DmdReader(SIMPLE_DMD) as dmd:
+        data = dmd.read_dataframe(dmd.channel_names[0:3], timestamp_format=TimestampFormat.NONE, max_samples=42)
+        assert len(data) == 42
+        assert list(data.columns) == dmd.channel_names[0:3]
 
 def test_timerange_start():
     dmd = DmdReader(INTERNAL_DMD)
@@ -108,6 +112,12 @@ def test_timerange_start():
     assert isinstance(data.index, pd.Float64Index)
     assert data.index[0] == 1
     assert data.index[-1] == 8
+
+    data = dmd.read_dataframe(dmd.channel_names[0], start_time=6, timestamp_format=TimestampFormat.SECONDS_SINCE_START, max_samples=42)
+    assert len(data) == 42
+    assert isinstance(data.index, pd.Float64Index)
+    assert data.index[0] == 6
+    assert data.index[-1] == 6 + (42 - 1) / 10000
 
     dmd.close()
 
@@ -188,6 +198,30 @@ def test_async():
     assert rng_data_sync.index[-1] == pytest.approx(1.5)
     assert rng_data_async.index[0] == pytest.approx(0.5)
     assert rng_data_async.index[-1] == pytest.approx(1.5)
+
+    dmd.close()
+
+def test_async_max_samples():
+    dmd = DmdReader(SYNCASYNC_DMD)
+    # The file has one sweeps [0 - 0.633] but a recording offset to acquisition start
+    all_data_sync = dmd.read_dataframe(dmd.channel_names[0], max_samples=100)
+    all_data_async = dmd.read_dataframe(dmd.channel_names[1], max_samples=100)
+    assert len(all_data_sync) == 100
+    assert len(all_data_async) == 100
+    assert all_data_sync.index[0] == 0
+    assert round(all_data_sync.index[-1], 3) == 0.01
+    assert all_data_async.index[0] == pytest.approx(0.01) # Async average with 100 Hz
+    assert all_data_async.index[-1] == pytest.approx(100 * 0.01) # One sample every 10ms
+
+    rng_data_sync = dmd.read_dataframe(dmd.channel_names[0], start_time=0.5, end_time=1.5, max_samples=10)
+    rng_data_async = dmd.read_dataframe(dmd.channel_names[1], start_time=0.5, end_time=1.5, max_samples=10)
+    assert len(rng_data_sync) == 10
+    assert len(rng_data_async) == 10
+
+    assert rng_data_sync.index[0] == pytest.approx(0.5)
+    assert rng_data_sync.index[-1] == pytest.approx(0.5 + (10-1) / 10000)
+    assert rng_data_async.index[0] == pytest.approx(0.5)
+    assert rng_data_async.index[-1] == pytest.approx(0.5 + (10-1) * 0.01)
 
     dmd.close()
 

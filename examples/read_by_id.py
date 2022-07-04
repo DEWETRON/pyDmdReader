@@ -15,6 +15,9 @@ filename = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tests"
 with pyDmdReader.DmdReader(filename) as dmd:
     print(f"Channels found in file: {dmd.channel_names}")
 
+    # Print the name of the first channel by ID
+    print(f"First channel's name is {dmd.allchannels[dmd.channel_ids[0]].name}")
+
     # Read first two channels
     data = dmd.read_dataframe(dmd.channel_ids[0:2])
     print(data)

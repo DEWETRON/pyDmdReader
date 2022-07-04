@@ -62,6 +62,12 @@ def test_check_timestamp_absolute_utc():
     assert timestamps[0] == np.datetime64("2021-08-05T10:21:27.2708")
     dmd.close()
 
+def test_check_max_samples():
+    with DmdReader(INTERNAL_DMD) as dmd:
+        data, timestamps = dmd.read_array(dmd.channel_names[0], timestamp_format=TimestampFormat.NONE, max_samples=1234)
+        assert timestamps is None
+        assert len(data) == 1234
+        assert data.dtype is np.dtype("float64")
 
 def test_check_vector():
     dmd = DmdReader(INTERNAL_DMD)

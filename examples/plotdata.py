@@ -43,11 +43,17 @@ for header in dmd_file.headers:
 print()
 
 selected_channels = channel_names[0:2]
+
+print("Get first 10 samples with timestamp >= 0.5 as array:")
+data, _ = dmd_file.read_array(
+    selected_channels, timestamp_format=pyDmdReader.TimestampFormat.NONE, start_time=0.5, max_samples=10
+)
+print(data)
+
 print(f"Fetching data for channels {selected_channels} in the time interval 0.1s and 0.2s")
 data = dmd_file.read_dataframe(
     selected_channels, timestamp_format=pyDmdReader.TimestampFormat.ABSOLUTE_LOCAL_TIME, start_time=0.1, end_time=0.2
 )
-print("Data as pandas DataFrame:")
 print(data)
 
 if plt is not None:

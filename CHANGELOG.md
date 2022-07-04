@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - planned
+
+### Added
+- all read_* methods now accept an optional `max_samples` parameter that limits the number of returned samples
+
 ## [0.5.0] - 2022-07-01
 
 ### Added
