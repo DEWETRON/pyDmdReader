@@ -112,13 +112,13 @@ class DmdReader:
 
     def read_dataframe(
         self,
-        ch_names: Union[List[str], str],
+        ch_names: Union[List[str], str, List[int], int],
         start_time: float = 0.0,
         end_time: Optional[float] = None,
         timestamp_format: TimestampFormat = TimestampFormat.SECONDS_SINCE_START
     ) -> pd.DataFrame:
         """
-        Read all data from specified channels (single name or list of names).
+        Read all data from specified channels (single name/id or list of names/ids).
         Each channel will be stored in a column of a pandas DataFrame with a common timestamp index.
         By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples
         within that inverval are returned

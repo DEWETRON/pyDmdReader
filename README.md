@@ -60,7 +60,7 @@ There are example scripts in the examples subdirectory that show how to read DMD
 import pyDmdReader
 
 dmd = pyDmdReader.DmdReader('my_recording.dmd')
-print("Channels found in file: {}".format(dmd.channel_names))
+print(f"Channels found in file: {dmd.channel_names}")
 
 # Read all data from channel 'AI 1/1'
 data = dmd.read_dataframe('AI 1/1')
@@ -76,7 +76,7 @@ It is also possible to scope the DMD reader lifetime to avoid forgetting to call
 ```python
 import pyDmdReader
 with pyDmdReader.DmdReader('name.dmd') as dmd:
-    print("Channels: {}".format(dmd.channel_names))
+    print(f"Channels: {dmd.channel_names}")
 ```
 
 ## Dealing with duplicate channel names
@@ -86,12 +86,15 @@ Instead, it is possible to access channels by a unique ID.
 import pyDmdReader
 
 with pyDmdReader.DmdReader('my_recording.dmd') as dmd:
-    print("Channels found in file: {}".format(dmd.channel_names))
+    print(f"Channels found in file: {dmd.channel_names}")
 
     # Read first two channels
     data = dmd.read_dataframe(dmd.channel_ids[0:2])
     print(data)
 ```
+
+In order to retrieve the channel name or other information of a channel with a unique ID, use the `allchannels` property of the `DmdReader`, which maps a channel id to the channel information.
+When there are no duplicate channel names, it is possible to use the `channels` property, which uses channel names as the map key.
 
 ## Testing
 
