@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - all read_* methods now accept an optional `max_samples` parameter that limits the number of returned samples
+- Support for reading the configuration XML from DMD files with the `configuration_xml` DmdReader property
+
+### Changed
+- Updated Windows binaries for Oxygen 6.2 compatibility
 
 ## [0.5.0] - 2022-07-01
 

@@ -20,7 +20,7 @@ def test_check_version():
     with DmdReader(SIMPLE_DMD) as dmd:
         version = dmd.version
         assert version.major == 1
-        assert version.minor == 1
+        assert version.minor == 2
 
 
 def test_check_channelnames():
@@ -66,3 +66,13 @@ def test_duplicate_names():
 
         assert dmd.allchannels[dmd.channel_ids[0]].name == "AI 1/1 Sim"
         assert dmd.allchannels[dmd.channel_ids[1]].name == "AI 1/1 Sim"
+
+def test_read_configuration():
+    with DmdReader(SIMPLE_DMD) as dmd:
+        assert dmd.version.supports(1,2)
+        xml = dmd.configuration_xml
+        assert len(xml) > 0
+
+        tree = dmd.configuration_etree
+        assert tree.tag.endswith('MeasurementConfig')
+        assert tree.attrib['version'] == '3.0'

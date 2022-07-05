@@ -13,7 +13,7 @@ DMD_FILE = "DMD_DEMO_FILE"
 
 def test_check_demo_file():
     dmd = pyDmdReader.DmdReader(DMD_FILE)
-    assert dmd.version.major == 1 and dmd.version.minor == 1
+    assert dmd.version.major == 1 and dmd.version.minor >= 1
 
     assert len(dmd.channel_names) >= 5
 
@@ -71,7 +71,7 @@ def test_check_demo_file():
 
 def test_check_demo_file_unique_ids():
     dmd = pyDmdReader.DmdReader(DMD_FILE)
-    assert dmd.version.major == 1 and dmd.version.minor == 1
+    assert dmd.version.major == 1 and dmd.version.minor >= 1
 
     assert len(dmd.channel_names) == len(dmd.channel_ids)
 

@@ -458,7 +458,7 @@ def get_reduced_sweeps(channel_handle: c_void_p, first_reduced_sweep: int, max_r
     return [Sweep(reduced_sweeps[i]) for i in range(0, num_reduced_sweeps.value)]
 
 @_check_loaded
-def get_configuration_xml(file_handle: c_void_p) -> str:
+def get_configuration_xml(file_handle: c_void_p) -> bytes:
     """DMD Reader API Get the file configuration"""
     config = c_char_p()
     error_code = _DMDReader_GetConfigurationXML(file_handle, byref(config))
