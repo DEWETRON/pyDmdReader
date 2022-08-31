@@ -32,6 +32,12 @@ print("Channels:")
 channel_names = dmd_file.channel_names
 print(f"All accessible channel names: {channel_names}")
 
+print("Channel information of first channel:")
+channel = dmd_file.channels[channel_names[0]]
+print(f"  Name: {channel.name}")
+print(f"  Unit: {channel.unit}")
+print(f"  Samplerate: {channel.sample_rate} Hz")
+
 print("Marker:")
 for marker in dmd_file.markers:
     print(marker)
@@ -59,6 +65,9 @@ print(data)
 if plt is not None:
     # Only, if matplotlib is installed
     data.plot(kind="line")
+    plt.xlabel("Time")
+    units = [dmd_file.channels[ch].unit for ch in selected_channels]
+    plt.ylabel(", ".join(units))
     plt.show()
 
 # Cleanup

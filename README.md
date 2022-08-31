@@ -62,6 +62,12 @@ import pyDmdReader
 dmd = pyDmdReader.DmdReader('my_recording.dmd')
 print(f"Channels found in file: {dmd.channel_names}")
 
+# Read configuration of first channel
+first_channel = dmd.channels[dmd.channel_names[0]]
+print(f"Name: {first_channel.name}")
+print(f"Unit: {first_channel.unit}")
+print(f"Samplerate: {first_channel.sample_rate} Hz")
+
 # Read all data from channel 'AI 1/1'
 data = dmd.read_dataframe('AI 1/1')
 print(data)
