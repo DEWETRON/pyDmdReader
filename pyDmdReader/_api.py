@@ -186,27 +186,26 @@ def get_samples_with_ts_scaled_value_seconds(
 
 @_check_loaded
 def get_samples_and_ts_scaled_value_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int
+    channel_handle: c_void_p, first_sample: int, max_samples: int,
+    sample_values: "Array", timestamp_values: "Array"
 ) -> Tuple[int, int, "Array", "Array"]:
     """
     DMD Reader API Get samples and timestamps
     Two separate arrays
     """
-    samples = (c_double * max_samples)()
-    timestamps = (c_double * max_samples)()
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
     error_code = _DMDReader_GetSamplesAndTS_ScaledValue_Seconds(
         channel_handle,
         c_uint64(first_sample),
         c_uint64(max_samples),
-        byref(samples),
-        byref(timestamps),
+        byref(sample_values),
+        byref(timestamp_values),
         byref(num_valid_samples),
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, samples, timestamps
+    return num_valid_samples.value, next_sample.value, sample_values, timestamp_values
 
 
 @_check_loaded
@@ -231,14 +230,13 @@ def get_samples_with_ts_reduced_value_seconds(
 
 @_check_loaded
 def get_samples_and_ts_reduced_value_seconds(
-    channel_handle: c_void_p, first_reduced_sample: int, max_reduced_samples: int
+    channel_handle: c_void_p, first_reduced_sample: int, max_reduced_samples: int,
+    reduced_samples: "Array", reduced_timestamps: "Array"
 ) -> Tuple[int, int, "Array", "Array"]:
     """
     DMD Reader API Get samples only (uses _DMDReader_GetSamplesAndTS_ReducedValue_Seconds)
     Two separate arrays
     """
-    reduced_samples = (DmdSampleValueReduced * max_reduced_samples)()
-    reduced_timestamps = (c_double * max_reduced_samples)()
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
     error_code = _DMDReader_GetSamplesAndTS_ReducedValue_Seconds(
@@ -276,36 +274,34 @@ def get_samples_with_ts_digital_value_seconds(
 
 @_check_loaded
 def get_samples_and_ts_digital_value_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int
+    channel_handle: c_void_p, first_sample: int, max_samples: int,
+    sample_values: "Array", timestamp_values: "Array"
 ) -> Tuple[int, int, "Array", "Array"]:
     """
     DMD Reader API Get samples and timestamps
     Two separate arrays
     """
-    samples = (c_int32 * max_samples)()
-    timestamps = (c_double * max_samples)()
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
     error_code = _DMDReader_GetSamplesAndTS_DigitalValue_Seconds(
         channel_handle,
         c_uint64(first_sample),
         c_uint64(max_samples),
-        byref(samples),
-        byref(timestamps),
+        byref(sample_values),
+        byref(timestamp_values),
         byref(num_valid_samples),
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, samples, timestamps
+    return num_valid_samples.value, next_sample.value, sample_values, timestamp_values
 
 
 @_check_loaded
 def get_samples_and_ts_scalar_vector_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int
+    channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int,
+    sample_values: "Array", timestamp_values: "Array"
 ) -> Tuple[int, int, "Array", "Array"]:
     """DMD Reader API Get samples and timestamps"""
-    samples = (c_double * (max_samples * max_sample_dimension))()
-    timestamps = (c_double * max_samples)()
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
     error_code = _DMDReader_GetSamplesAndTS_ScalarVector_Seconds(
@@ -313,23 +309,22 @@ def get_samples_and_ts_scalar_vector_seconds(
         c_uint64(first_sample),
         c_uint64(max_samples),
         c_uint32(max_sample_dimension),
-        byref(samples),
-        byref(timestamps),
+        byref(sample_values),
+        byref(timestamp_values),
         None,
         byref(num_valid_samples),
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, samples, timestamps
+    return num_valid_samples.value, next_sample.value, sample_values, timestamp_values
 
 
 @_check_loaded
 def get_samples_and_ts_complex_vector_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int
+    channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int,
+    sample_values: "Array", timestamp_values: "Array"
 ) -> Tuple[int, int, "Array", "Array"]:
     """DMD Reader API Get samples and timestamps"""
-    samples = (DmdSampleValueComplex * (max_samples * max_sample_dimension))()
-    timestamps = (c_double * max_samples)()
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
     error_code = _DMDReader_GetSamplesAndTS_ComplexVector_Seconds(
@@ -337,14 +332,14 @@ def get_samples_and_ts_complex_vector_seconds(
         c_uint64(first_sample),
         c_uint64(max_samples),
         c_uint32(max_sample_dimension),
-        byref(samples),
-        byref(timestamps),
+        byref(sample_values),
+        byref(timestamp_values),
         None,
         byref(num_valid_samples),
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, samples, timestamps
+    return num_valid_samples.value, next_sample.value, sample_values, timestamp_values
 
 
 # READ FILE META DATA
