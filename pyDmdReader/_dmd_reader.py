@@ -179,9 +179,11 @@ class DmdReader:
         Read all data from specified channels (single name/id or list of names/ids).
         Each channel will be stored in a row of a numpy data array. A separate timestamp array will contain the
         timestamps.
-        By specifying the inclusive time-range [start_time, end_time] in seconds since recording start, only samples
-        within that interval are returned
-        By default timestamps in seconds relative to recording start are returned:
+        By specifying the inclusive time-range [`start_time`, `end_time`] in seconds since recording start, only samples
+        within that interval are returned.
+        The number of returned samples can be limited by the `max_samples` parameter.
+        By default, timestamps in seconds relative to recording start are returned.
+        This can be changed by the `timestamp_format` parameter:
             - TimestampFormat.NONE -> no timestamp information is stored in the data frame
             - TimestampFormat.ABSOLUTE_UTC_TIME -> relative timestamps are replaced with absolute utc timezone
               timestamps
