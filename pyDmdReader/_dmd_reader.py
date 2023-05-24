@@ -200,7 +200,7 @@ class DmdReader:
         if not used_channels:
             return None, None
 
-        result = np.array([])
+        result_list = []
         result_timestamps = None
         for ch_name in used_channels:
             ch_config = self.__channels[ch_name]
@@ -221,16 +221,12 @@ class DmdReader:
                     )
 
             if ch_config.max_sample_dimension == 1:
-                if result.size == 0:
-                    result = data
-                else:
-                    result = np.vstack([result, data])
+                result_list.append(data)
             else:
                 for i in range(0, ch_config.max_sample_dimension):
-                    if result.size == 0:
-                        result = data[i::ch_config.max_sample_dimension]
-                    else:
-                        result = np.vstack([result, data[i::ch_config.max_sample_dimension]])
+                    result_list.append(data[i::ch_config.max_sample_dimension])
+
+            result = np.array(result_list)
 
         if timestamp_format in [
             TimestampFormat.ABSOLUTE_LOCAL_TIME,
@@ -257,8 +253,8 @@ class DmdReader:
         """
         ch_id = self.__resolve_channel(ch_name)
         ch_config = self.__channels[ch_id]
-        data = np.array([], dtype="float64")
-        timestamps = np.array([], dtype="float64")
+        data: List[np.float64] = []
+        timestamps: List[np.float64] = []
 
         if ch_config.reduced_sample_type == SampleType.INVALID:
             return pd.DataFrame()
@@ -286,12 +282,18 @@ class DmdReader:
                     reduced_samples,
                     reduced_timestamps
                 )
-                timestamps = np.r_[timestamps, np.frombuffer(reduced_timestamps, count=num_valid_samples)]
-                data = np.r_[data, np.frombuffer(reduced_samples, count=4*num_valid_samples)]
+                timestamps.append(np.frombuffer(reduced_timestamps, count=num_valid_samples).copy())
+                data.append(np.frombuffer(reduced_samples, count=4*num_valid_samples).copy())
                 if max_samples is not None:
                     max_samples -= num_valid_samples
                     if max_samples <= 0:
                         break
+
+            if timestamps:
+                timestamps = np.concatenate(timestamps)
+
+            if data:
+                data = np.concatenate(data)
 
             if timestamp_format == TimestampFormat.NONE:
                 data_frame = pd.DataFrame(dtype="float64")
@@ -416,8 +418,8 @@ class DmdReader:
 
     def __get_all_sweeps(self, ch_config: ChannelConfig, max_samples:int = None) -> Tuple[np.ndarray, np.ndarray]:
         """Get data from all sweeps of given ch_config"""
-        data = np.array([], dtype=ch_config.dtype)
-        timestamps = np.array([], dtype="float64")
+        data: List[np.float64 | np.int32 | np.complex128] = []
+        timestamps: List[np.float64] = []
         block_size = 1000000
 
         for sweep in ch_config.sweeps:
@@ -446,8 +448,8 @@ class DmdReader:
                                                                                   max_sweep_samples,
                                                                                   sample_values,
                                                                                   timestamp_values)
-                data = np.r_[data, raw_values]
-                timestamps = np.r_[timestamps, raw_timestamps]
+                data.append(raw_values.copy())
+                timestamps.append(raw_timestamps.copy())
 
                 first_sample = next_sample
                 old_max_sweep_samples = max_sweep_samples
@@ -458,7 +460,14 @@ class DmdReader:
                     if max_samples <= 0:
                         break
 
+        if timestamps:
+            timestamps = np.concatenate(timestamps)
+
+        if data:
+            data = np.concatenate(data)
+
         return timestamps, data
+
 
     def __get_ranged_sweeps(
         self, ch_config: ChannelConfig,
@@ -467,8 +476,8 @@ class DmdReader:
     ) -> Tuple[np.array, np.array]:
         actual_end_time = end_time if end_time is not None else ch_config.sweeps[-1].end_time
 
-        timestamps = np.array([], dtype="float64")
-        data = np.array([])
+        timestamps: List[np.float64] = []
+        data: List[np.float64 | np.int32 | np.complex128] = []
         block_size = 1000000
 
         # Get data from suitable sweeps
@@ -483,18 +492,21 @@ class DmdReader:
                     end_sample = int(actual_end_time * sweep.sample_frequency)
                     first_sample, max_sweep_samples = self.__get_corrected_sample_count(sweep, start_sample, end_sample)
 
-                    sample_values, timestamp_values = self.__init_sample_and_timestamp_arrays(ch_config,
-                                                                                              max_samples)
-
                     if max_samples is not None:
                         max_sweep_samples = min(max_sweep_samples, max_samples)
+
+                    if old_max_sweep_samples != max_sweep_samples:
+                        sample_values, timestamp_values = self.__init_sample_and_timestamp_arrays(ch_config,
+                                                                                                  max_sweep_samples)
+                        old_max_sweep_samples = max_sweep_samples
+
                     sweep_timestamps, sweep_data, *_ = self.__get_single_sweep(ch_config,
                                                                                first_sample,
                                                                                max_sweep_samples,
                                                                                sample_values,
                                                                                timestamp_values)
-                    timestamps = np.r_[timestamps, sweep_timestamps]
-                    data = np.r_[data, sweep_data]
+                    timestamps.append(sweep_timestamps.copy())
+                    data.append(sweep_data.copy())
 
                     if max_samples is not None:
                         max_samples -= len(sweep_timestamps)
@@ -518,7 +530,8 @@ class DmdReader:
 
                         if old_max_sweep_samples != max_sweep_samples:
                             sample_values, timestamp_values = self.__init_sample_and_timestamp_arrays(ch_config,
-                                                                                                      max_samples)
+                                                                                                      block_max_samples)
+                            old_max_sweep_samples = max_sweep_samples
 
                         raw_timestamps, raw_values, next_sample = self.__get_single_sweep(
                             ch_config, first_sample, block_max_samples, sample_values, timestamp_values
@@ -527,14 +540,14 @@ class DmdReader:
                         if len(raw_timestamps) > 0:
                             num_samples = 0
                             if raw_timestamps[-1] <= actual_end_time:
-                                timestamps = np.r_[timestamps, raw_timestamps]
-                                data = np.r_[data, raw_values]
+                                timestamps.append(raw_timestamps.copy())
+                                data.append(raw_values.copy())
                                 num_samples = len(raw_timestamps)
                             else:
                                 # Do not use sample values outside the requested range
                                 last_valid = np.argmax(raw_timestamps > actual_end_time)
-                                timestamps = np.r_[timestamps, raw_timestamps[:last_valid]]
-                                data = np.r_[data, raw_values[:(last_valid * ch_config.max_sample_dimension)]]
+                                timestamps.append(raw_timestamps[:last_valid].copy())
+                                data.append(raw_values[:(last_valid * ch_config.max_sample_dimension)].copy())
                                 num_samples = last_valid
 
                             if max_samples is not None:
@@ -543,7 +556,12 @@ class DmdReader:
                                     break
 
                         first_sample = next_sample
-                        old_max_sweep_samples = max_sweep_samples
+
+        if timestamps:
+            timestamps = np.concatenate(timestamps)
+
+        if data:
+            data = np.concatenate(data)
 
         return timestamps, data
 
