@@ -1,4 +1,4 @@
-﻿"""
+"""
 Copyright DEWETRON GmbH 2021
 
 Dmd reader library - API module
@@ -188,7 +188,7 @@ def get_samples_with_ts_scaled_value_seconds(
 def get_samples_and_ts_scaled_value_seconds(
     channel_handle: c_void_p, first_sample: int, max_samples: int,
     sample_values: "Array", timestamp_values: "Array"
-) -> Tuple[int, int, "Array", "Array"]:
+) -> Tuple[int, int]:
     """
     DMD Reader API Get samples and timestamps
     Two separate arrays
@@ -205,7 +205,7 @@ def get_samples_and_ts_scaled_value_seconds(
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, sample_values, timestamp_values
+    return num_valid_samples.value, next_sample.value
 
 
 @_check_loaded
@@ -232,7 +232,7 @@ def get_samples_with_ts_reduced_value_seconds(
 def get_samples_and_ts_reduced_value_seconds(
     channel_handle: c_void_p, first_reduced_sample: int, max_reduced_samples: int,
     reduced_samples: "Array", reduced_timestamps: "Array"
-) -> Tuple[int, int, "Array", "Array"]:
+) -> Tuple[int, int]:
     """
     DMD Reader API Get samples only (uses _DMDReader_GetSamplesAndTS_ReducedValue_Seconds)
     Two separate arrays
@@ -249,7 +249,7 @@ def get_samples_and_ts_reduced_value_seconds(
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, reduced_samples, reduced_timestamps
+    return num_valid_samples.value, next_sample.value
 
 
 @_check_loaded
@@ -276,7 +276,7 @@ def get_samples_with_ts_digital_value_seconds(
 def get_samples_and_ts_digital_value_seconds(
     channel_handle: c_void_p, first_sample: int, max_samples: int,
     sample_values: "Array", timestamp_values: "Array"
-) -> Tuple[int, int, "Array", "Array"]:
+) -> Tuple[int, int]:
     """
     DMD Reader API Get samples and timestamps
     Two separate arrays
@@ -293,14 +293,14 @@ def get_samples_and_ts_digital_value_seconds(
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, sample_values, timestamp_values
+    return num_valid_samples.value, next_sample.value
 
 
 @_check_loaded
 def get_samples_and_ts_scalar_vector_seconds(
     channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int,
     sample_values: "Array", timestamp_values: "Array"
-) -> Tuple[int, int, "Array", "Array"]:
+) -> Tuple[int, int]:
     """DMD Reader API Get samples and timestamps"""
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
@@ -316,14 +316,14 @@ def get_samples_and_ts_scalar_vector_seconds(
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, sample_values, timestamp_values
+    return num_valid_samples.value, next_sample.value
 
 
 @_check_loaded
 def get_samples_and_ts_complex_vector_seconds(
     channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int,
     sample_values: "Array", timestamp_values: "Array"
-) -> Tuple[int, int, "Array", "Array"]:
+) -> Tuple[int, int]:
     """DMD Reader API Get samples and timestamps"""
     num_valid_samples = c_uint64(0)
     next_sample = c_uint64(0)
@@ -339,7 +339,7 @@ def get_samples_and_ts_complex_vector_seconds(
         byref(next_sample)
     )
     _check_error(error_code)
-    return num_valid_samples.value, next_sample.value, sample_values, timestamp_values
+    return num_valid_samples.value, next_sample.value
 
 
 # READ FILE META DATA
