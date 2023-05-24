@@ -4,19 +4,18 @@ Copyright DEWETRON GmbH 2021
 Dmd reader library - API module
 """
 
-
 import inspect
-from ctypes import c_int32, c_uint32, c_uint64, byref, c_char_p, c_void_p, c_bool, c_double
-from ._structures import DmdTimestampUtc, DmdChannelInformation, DmdSweep, DmdMarkerEvent, DmdHeaderField, \
-    DmdScaledSampleTimeStamp, DmdReducedSampleTimestamp, DmdSampleValueComplex, DmdDigitalSampleTimestamp, \
-    DmdSampleValueReduced
-from .types import SampleType, ErrorCode
-from .data_types import MarkerEvent, ChannelInformation, HeaderField, Sweep, DateTimeZone, Version
-from typing import Tuple, List, Optional, TYPE_CHECKING
+from ctypes import byref, c_bool, c_char_p, c_double, c_int32, c_uint32, c_uint64, c_void_p
+from typing import List, Optional, TYPE_CHECKING, Tuple
+
+from ._structures import DmdChannelInformation, DmdDigitalSampleTimestamp, DmdHeaderField, DmdMarkerEvent, DmdReducedSampleTimestamp, \
+    DmdSampleValueComplex, DmdSampleValueReduced, DmdScaledSampleTimeStamp, DmdSweep, DmdTimestampUtc
+from .data_types import ChannelInformation, DateTimeZone, HeaderField, MarkerEvent, Sweep, Version
+from .types import ErrorCode, SampleType
+
 if TYPE_CHECKING:
     from .types import ChannelType
     from ctypes import Array
-
 
 _DMDReader_GetVersion: Optional[type] = None
 _DMDReader_Initialize: Optional[type] = None
@@ -51,6 +50,7 @@ _DMDReader_GetConfigurationXML: Optional[type] = None
 
 def _check_loaded(func):
     """Decorator to check if the dll is already loaded"""
+
     def func_wrapper(*args, **kwargs):
         """Function wrapper"""
         try:
@@ -59,6 +59,7 @@ def _check_loaded(func):
             raise Exception("DMD reader library not loaded")
         except Exception:
             raise
+
     return func_wrapper
 
 
@@ -124,7 +125,7 @@ def get_num_channels(file_handle: c_void_p, channel_type: "ChannelType") -> int:
 
 @_check_loaded
 def get_channels(
-    file_handle: c_void_p, channel_type: "ChannelType", first_channel: int, max_channels: int
+        file_handle: c_void_p, channel_type: "ChannelType", first_channel: int, max_channels: int
 ) -> Tuple[c_void_p, int]:
     """DMD Reader API Get channels"""
     channel_handle = c_void_p()
@@ -166,7 +167,7 @@ def get_channel_information(channel_handle: c_void_p) -> ChannelInformation:
 
 @_check_loaded
 def get_samples_with_ts_scaled_value_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int
+        channel_handle: c_void_p, first_sample: int, max_samples: int
 ) -> Tuple[int, int, "Array"]:
     """DMD Reader API Get samples with timestamps"""
     scaled_timestamp_values = (DmdScaledSampleTimeStamp * max_samples)()
@@ -186,7 +187,7 @@ def get_samples_with_ts_scaled_value_seconds(
 
 @_check_loaded
 def get_samples_and_ts_scaled_value_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int
+        channel_handle: c_void_p, first_sample: int, max_samples: int
 ) -> Tuple[int, int, "Array", "Array"]:
     """
     DMD Reader API Get samples and timestamps
@@ -211,7 +212,7 @@ def get_samples_and_ts_scaled_value_seconds(
 
 @_check_loaded
 def get_samples_with_ts_reduced_value_seconds(
-    channel_handle: c_void_p, first_reduced_sample: int, max_reduced_samples: int
+        channel_handle: c_void_p, first_reduced_sample: int, max_reduced_samples: int
 ) -> Tuple[int, int, "Array"]:
     """DMD Reader API Get reduced samples with timestamps"""
     reduced_timestamp_values = (DmdReducedSampleTimestamp * max_reduced_samples)()
@@ -231,7 +232,7 @@ def get_samples_with_ts_reduced_value_seconds(
 
 @_check_loaded
 def get_samples_and_ts_reduced_value_seconds(
-    channel_handle: c_void_p, first_reduced_sample: int, max_reduced_samples: int
+        channel_handle: c_void_p, first_reduced_sample: int, max_reduced_samples: int
 ) -> Tuple[int, int, "Array", "Array"]:
     """
     DMD Reader API Get samples only (uses _DMDReader_GetSamplesAndTS_ReducedValue_Seconds)
@@ -256,7 +257,7 @@ def get_samples_and_ts_reduced_value_seconds(
 
 @_check_loaded
 def get_samples_with_ts_digital_value_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int
+        channel_handle: c_void_p, first_sample: int, max_samples: int
 ) -> Tuple[int, int, "Array"]:
     """DMD Reader API Get samples with timestamps"""
     digital_timestamp_values = (DmdDigitalSampleTimestamp * max_samples)()
@@ -276,7 +277,7 @@ def get_samples_with_ts_digital_value_seconds(
 
 @_check_loaded
 def get_samples_and_ts_digital_value_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int
+        channel_handle: c_void_p, first_sample: int, max_samples: int
 ) -> Tuple[int, int, "Array", "Array"]:
     """
     DMD Reader API Get samples and timestamps
@@ -301,7 +302,7 @@ def get_samples_and_ts_digital_value_seconds(
 
 @_check_loaded
 def get_samples_and_ts_scalar_vector_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int
+        channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int
 ) -> Tuple[int, int, "Array", "Array"]:
     """DMD Reader API Get samples and timestamps"""
     samples = (c_double * (max_samples * max_sample_dimension))()
@@ -325,7 +326,7 @@ def get_samples_and_ts_scalar_vector_seconds(
 
 @_check_loaded
 def get_samples_and_ts_complex_vector_seconds(
-    channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int
+        channel_handle: c_void_p, first_sample: int, max_samples: int, max_sample_dimension: int
 ) -> Tuple[int, int, "Array", "Array"]:
     """DMD Reader API Get samples and timestamps"""
     samples = (DmdSampleValueComplex * (max_samples * max_sample_dimension))()
@@ -457,11 +458,11 @@ def get_reduced_sweeps(channel_handle: c_void_p, first_reduced_sweep: int, max_r
     _check_error(error_code)
     return [Sweep(reduced_sweeps[i]) for i in range(0, num_reduced_sweeps.value)]
 
+
 @_check_loaded
-def get_configuration_xml(file_handle: c_void_p) -> bytes:
+def get_configuration_xml(file_handle: c_void_p) -> Optional[bytes]:
     """DMD Reader API Get the file configuration"""
     config = c_char_p()
     error_code = _DMDReader_GetConfigurationXML(file_handle, byref(config))
     _check_error(error_code)
-    #s = ctypes.cast(config, ctypes.c_char_p).value
     return config.value

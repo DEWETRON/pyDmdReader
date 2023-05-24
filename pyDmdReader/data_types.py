@@ -4,12 +4,14 @@ Copyright DEWETRON GmbH 2021
 Dmd reader library - Module for all accessible data types returned by DmdReader functions
 """
 
-
+from datetime import timedelta, timezone
 from functools import total_ordering
-import pandas as pd
-from datetime import timezone, timedelta
-from .types import MarkerEventSource, MarkerEventType, ChannelType
 from typing import TYPE_CHECKING
+
+import pandas as pd
+
+from .types import ChannelType, MarkerEventSource, MarkerEventType
+
 if TYPE_CHECKING:
     from ._structures import DmdTimestampUtc, DmdHeaderField, DmdChannelInformation, DmdMarkerEvent, DmdSweep, \
         DmdStructures
@@ -17,6 +19,7 @@ if TYPE_CHECKING:
 
 class _ConverterBase:
     """Base class"""
+
     def __init__(self, structure: "DmdStructures"):
         for field in structure._fields_:
             field_name = field[0]
@@ -28,7 +31,7 @@ class _ConverterBase:
     def __repr__(self):
         return "{} ({})".format(self.__class__.__name__, ", ".join(
             [f"{key}: {value}" for key, value in self.__dict__.items()])
-        )
+                                )
 
 
 class DateTimeZone(_ConverterBase):
@@ -48,9 +51,9 @@ class DateTimeZone(_ConverterBase):
         tzinfo = timezone(timedelta(minutes=self.time_offset))
 
         return (
-            pd.Timestamp(year=self.year, month=1, day=1, tz=tzinfo) +
-            pd.Timedelta(self.day_of_year - 1, unit="days") +
-            pd.Timedelta(self.time_of_day, unit="seconds")
+                pd.Timestamp(year=self.year, month=1, day=1, tz=tzinfo) +
+                pd.Timedelta(self.day_of_year - 1, unit="days") +
+                pd.Timedelta(self.time_of_day, unit="seconds")
         )
 
     def __str__(self):
@@ -112,12 +115,13 @@ class Sweep(_ConverterBase):
     sample_frequency = None
 
     @property
-    def max_samples(self):
+    def max_samples(self) -> int:
         """Calculated max samples"""
         return self.last_sample - self.first_sample + 1
 
     def __init__(self, structure: "DmdSweep"):
         _ConverterBase.__init__(self, structure)
+
 
 @total_ordering
 class Version:

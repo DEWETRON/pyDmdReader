@@ -11,7 +11,7 @@ dmd_file.close()
 
 
 __copyright__ = "Copyright 2022 DEWETRON GmbH"
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "_dmd_reader",
     "_loader",
     "_structures",
+    "DmdReader"
 ]
 
 

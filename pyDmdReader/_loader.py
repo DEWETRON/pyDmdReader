@@ -8,20 +8,18 @@ Dmd reader library - DLL loader module
 import os
 import sys
 from ctypes import cdll
+from typing import List, Tuple, Union
+
 from . import _api
 from .data_types import Version
-from typing import List
-
 
 _g_dmd_reader_api_dll = None
 
 
-def _get_exposed_dmd_functions() -> List[str]:
+def _get_exposed_dmd_functions() -> List[Union[str, Tuple[str, "Version"]]]:
     """Return a list of functions available in the dmd reader dll"""
     return [
         # Common
-        #"DMDReader_GetVersion",
-        #"DMDReader_Initialize",
         "DMDReader_Dispose",
         "DMDReader_OpenFile",
         "DMDReader_CloseFile",
@@ -82,7 +80,6 @@ class ApiLoader:
 
             # Initialize all dmd reader functions
             for dmd_function in _get_exposed_dmd_functions():
-                req_version = Version(1, 0)
                 if len(dmd_function) == 2:
                     req_version = dmd_function[1]
                     if not interface_version.supports(req_version.major, req_version.minor):

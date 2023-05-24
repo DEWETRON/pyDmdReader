@@ -5,7 +5,7 @@ Dmd reader library - DLL structure module
 """
 
 
-from ctypes import Structure, c_double, c_bool, c_int32, c_uint64, c_char_p
+from ctypes import Structure, c_bool, c_char_p, c_double, c_int32, c_uint64
 from typing import Union
 
 
