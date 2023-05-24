@@ -278,9 +278,7 @@ class DmdReader:
 
                 (
                     num_valid_samples,
-                    next_reduced_sample,
-                    reduced_values,
-                    reduced_timestamps
+                    next_reduced_sample
                 ) = _api.get_samples_and_ts_reduced_value_seconds(
                     ch_config.handle,
                     sweep.first_sample,
@@ -289,7 +287,7 @@ class DmdReader:
                     reduced_timestamps
                 )
                 timestamps = np.r_[timestamps, np.frombuffer(reduced_timestamps, count=num_valid_samples)]
-                data = np.r_[data, np.frombuffer(reduced_values, count=4*num_valid_samples)]
+                data = np.r_[data, np.frombuffer(reduced_samples, count=4*num_valid_samples)]
                 if max_samples is not None:
                     max_samples -= num_valid_samples
                     if max_samples <= 0:
@@ -557,7 +555,7 @@ class DmdReader:
         """Get data for given sweep of given channel"""
         timestamps_dtype = "float64"
         if ch_config.raw_sample_type == SampleType.DOUBLE:
-            num_valid_samples, next_sample, raw_values, raw_timestamps = _api.get_samples_and_ts_scaled_value_seconds(
+            num_valid_samples, next_sample = _api.get_samples_and_ts_scaled_value_seconds(
                 ch_config.handle,
                 first_sample,
                 max_samples,
@@ -566,7 +564,7 @@ class DmdReader:
             )
         elif ch_config.raw_sample_type == SampleType.SINT32:
             # Digital
-            num_valid_samples, next_sample, raw_values, raw_timestamps = _api.get_samples_and_ts_digital_value_seconds(
+            num_valid_samples, next_sample = _api.get_samples_and_ts_digital_value_seconds(
                 ch_config.handle,
                 first_sample,
                 max_samples,
@@ -574,7 +572,7 @@ class DmdReader:
                 timestamp_values
             )
         elif ch_config.raw_sample_type == SampleType.DOUBLE_VECTOR:
-            num_valid_samples, next_sample, raw_values, raw_timestamps = _api.get_samples_and_ts_scalar_vector_seconds(
+            num_valid_samples, next_sample = _api.get_samples_and_ts_scalar_vector_seconds(
                 ch_config.handle,
                 first_sample,
                 max_samples,
@@ -583,7 +581,7 @@ class DmdReader:
                 timestamp_values
             )
         elif ch_config.raw_sample_type == SampleType.COMPLEX_VECTOR:
-            num_valid_samples, next_sample, raw_values, raw_timestamps = _api.get_samples_and_ts_complex_vector_seconds(
+            num_valid_samples, next_sample = _api.get_samples_and_ts_complex_vector_seconds(
                 ch_config.handle,
                 first_sample,
                 max_samples,
@@ -594,8 +592,8 @@ class DmdReader:
         else:
             raise NotImplementedError(f"Sampletype {ch_config.raw_sample_type} not supported")
 
-        timestamps = np.frombuffer(raw_timestamps, dtype=timestamps_dtype, count=num_valid_samples)
-        data = np.frombuffer(raw_values, dtype=ch_config.dtype, count=num_valid_samples*ch_config.max_sample_dimension)
+        timestamps = np.frombuffer(timestamp_values, dtype=timestamps_dtype, count=num_valid_samples)
+        data = np.frombuffer(sample_values, dtype=ch_config.dtype, count=num_valid_samples*ch_config.max_sample_dimension)
 
         return timestamps, data, next_sample
 
