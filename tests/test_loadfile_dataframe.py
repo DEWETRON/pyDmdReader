@@ -5,6 +5,7 @@ Dmd reader library - Unit Tests
 """
 
 
+import numpy as np
 import os
 import pandas as pd
 import pytest
@@ -42,7 +43,7 @@ def test_check_timestamp_seconds():
     column_names = data.columns
     assert len(column_names) == 1
     assert column_names[0] == dmd.channel_names[0]
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     dmd.close()
 
 
@@ -97,25 +98,25 @@ def test_timerange_start():
     # The file has two sweeps [1-2] and [5-8]
     data = dmd.read_dataframe(dmd.channel_names[0], start_time=3, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 30001
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     assert data.index[0] == 5
     assert data.index[-1] == 8
 
     data = dmd.read_dataframe(dmd.channel_names[0], start_time=6, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 20001
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     assert data.index[0] == 6
     assert data.index[-1] == 8
 
     data = dmd.read_dataframe(dmd.channel_names[0], start_time=0.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 40002
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     assert data.index[0] == 1
     assert data.index[-1] == 8
 
     data = dmd.read_dataframe(dmd.channel_names[0], start_time=6, timestamp_format=TimestampFormat.SECONDS_SINCE_START, max_samples=42)
     assert len(data) == 42
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     assert data.index[0] == 6
     assert data.index[-1] == 6 + (42 - 1) / 10000
 
@@ -127,13 +128,13 @@ def test_timerange_end():
     # The file has two sweeps [1-2] and [5-8]
     data = dmd.read_dataframe(dmd.channel_names[0], end_time=3, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 10001
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     assert data.index[0] == 1
     assert data.index[-1] == 2
 
     data = dmd.read_dataframe(dmd.channel_names[0], end_time=5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 10002
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     assert data.index[0] == 1
     assert data.index[-1] == 5
 
@@ -142,7 +143,7 @@ def test_timerange_end():
 
     data = dmd.read_dataframe(dmd.channel_names[0], end_time=1.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 5001
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     assert data.index[0] == 1
     assert data.index[-1] == 1.5
 
@@ -154,7 +155,7 @@ def test_timerange_both():
     # The file has two sweeps [1-2] and [5-8]
     data = dmd.read_dataframe(dmd.channel_names[0], start_time=1.5, end_time=5.5, timestamp_format=TimestampFormat.SECONDS_SINCE_START)
     assert len(data) == 10002
-    assert isinstance(data.index, pd.Float64Index)
+    assert all(isinstance(i, float) for i in data.index)
     assert data.index[0] == 1.5
     assert data.index[-1] == 5.5
 
