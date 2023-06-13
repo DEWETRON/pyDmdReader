@@ -8,6 +8,8 @@ DMD reader library - Main class
 import xml.etree.ElementTree as et
 import numpy as np
 import pandas as pd
+from numpy import ndarray
+
 from . import _api
 from .types import ChannelType, SampleType, DataFrameColumn, TimestampFormat
 from .data_types import HeaderField, MarkerEvent, MarkerEventType, MarkerEventSource, Version
@@ -28,7 +30,7 @@ class DmdReader:
         """
         Load data file with file_name and retrieve channel informations
 
-        Retrive a list of channel ids (`channel_ids`) or names (`channel_names`)
+        Retrieve a list of channel ids (`channel_ids`) or names (`channel_names`)
         and request data from selected channels via `read_dataframe`, `read_array` or `read_reduced`
         Channels with a unique name can be accessed via channel names
         """
@@ -126,7 +128,7 @@ class DmdReader:
         Read all data from specified channels (single name/id or list of names/ids).
         Each channel will be stored in a column of a pandas DataFrame with a common timestamp index.
         By specifying the inclusive time-range [`start_time`, `end_time`] in seconds since recording start, only samples
-        within that inverval are returned.
+        within that interval are returned.
         The number of returned samples can be limited by the `max_samples` parameter.
 
         By default, timestamps in seconds relative to recording start are returned.
@@ -212,31 +214,11 @@ class DmdReader:
             else:
                 timestamps, data = self.__get_ranged_sweeps(ch_config, start_time, end_time, max_samples)
 
-            if result_timestamps is None:
-                if timestamp_format != TimestampFormat.NONE:
-                    result_timestamps = timestamps
-            else:
-                if timestamp_format != TimestampFormat.NONE and not np.array_equal(result_timestamps, timestamps):
-                    raise RuntimeError(
-                        "Cannot combine channels with different timestamps. "
-                        "Try fetching data for each channel individually."
-                    )
-
-            if ch_config.max_sample_dimension == 1:
-                result_list.append(data)
-            else:
-                for i in range(0, ch_config.max_sample_dimension):
-                    result_list.append(data[i::ch_config.max_sample_dimension])
-
+            result_timestamps = self.__parse_timestamps(result_timestamps, timestamp_format, timestamps)
+            self.__update_result_list(ch_config, data, result_list)
             result = np.array(result_list)
 
-        if timestamp_format in [
-            TimestampFormat.ABSOLUTE_LOCAL_TIME,
-            TimestampFormat.ABSOLUTE_UTC_TIME,
-        ]:
-            result_timestamps = self.__get_data_abs_timestamp_array(
-                result_timestamps, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME
-            )
+        result_timestamps = self.__parse_utc_timestamps(result_timestamps, timestamp_format)
 
         if len(result) == 1:
             result = result[0]
@@ -279,24 +261,18 @@ class DmdReader:
             else:
                 timestamps, data = self.__get_ranged_sweeps_by_index(ch_config, start_sample, end_sample)
 
-            if result_timestamps is None:
-                if timestamp_format != TimestampFormat.NONE:
-                    result_timestamps = timestamps
-            else:
-                if timestamp_format != TimestampFormat.NONE and not np.array_equal(result_timestamps, timestamps):
-                    raise RuntimeError(
-                        "Cannot combine channels with different timestamps. "
-                        "Try fetching data for each channel individually."
-                    )
-
-            if ch_config.max_sample_dimension == 1:
-                result_list.append(data)
-            else:
-                for i in range(0, ch_config.max_sample_dimension):
-                    result_list.append(data[i::ch_config.max_sample_dimension])
-
+            result_timestamps = self.__parse_timestamps(result_timestamps, timestamp_format, timestamps)
+            self.__update_result_list(ch_config, data, result_list)
             result = np.array(result_list)
 
+        result_timestamps = self.__parse_utc_timestamps(result_timestamps, timestamp_format)
+
+        if len(result) == 1:
+            result = result[0]
+
+        return result, result_timestamps
+
+    def __parse_utc_timestamps(self, result_timestamps: ndarray, timestamp_format:TimestampFormat):
         if timestamp_format in [
             TimestampFormat.ABSOLUTE_LOCAL_TIME,
             TimestampFormat.ABSOLUTE_UTC_TIME,
@@ -304,11 +280,28 @@ class DmdReader:
             result_timestamps = self.__get_data_abs_timestamp_array(
                 result_timestamps, timestamp_format == TimestampFormat.ABSOLUTE_UTC_TIME
             )
+        return result_timestamps
 
-        if len(result) == 1:
-            result = result[0]
+    @staticmethod
+    def __update_result_list(ch_config: ChannelConfig, data: ndarray, result_list: List[ndarray]):
+        if ch_config.max_sample_dimension == 1:
+            result_list.append(data)
+        else:
+            for i in range(0, ch_config.max_sample_dimension):
+                result_list.append(data[i::ch_config.max_sample_dimension])
 
-        return result, result_timestamps
+    @staticmethod
+    def __parse_timestamps(result_timestamps: Optional[ndarray], timestamp_format: TimestampFormat, timestamps: ndarray) -> ndarray:
+        if result_timestamps is None:
+            if timestamp_format != TimestampFormat.NONE:
+                result_timestamps = timestamps
+        else:
+            if timestamp_format != TimestampFormat.NONE and not np.array_equal(result_timestamps, timestamps):
+                raise RuntimeError(
+                    "Cannot combine channels with different timestamps. "
+                    "Try fetching data for each channel individually."
+                )
+        return result_timestamps
 
     def read_reduced(
         self, ch_name: Union[str, int],
@@ -386,7 +379,7 @@ class DmdReader:
             f"Sampletype {ch_config.reduced_sample_type} not supported for reduced data"
         )
 
-    def __gather_usable_channels(self, ch_names: Union[List[str], str, List[int], int]) -> List[str]:
+    def __gather_usable_channels(self, ch_names: Union[List[str], str, List[int], int]) -> List[int]:
         if isinstance(ch_names, (str, int)):
             # Convert single channel to list
             ch_names = [ch_names]
