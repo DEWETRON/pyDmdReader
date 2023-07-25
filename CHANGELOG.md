@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2023-07-24
+- Release community fixes
+- Compatibility to Oxygen 6.6
+
 ## [0.6.0] - planned
 
 ### Added

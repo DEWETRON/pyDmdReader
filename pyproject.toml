@@ -1,7 +1,7 @@
 [project]
 name = "pyDmdReader"
 description = "Python module to read Dewetron Oxygen DMD files"
-version = "0.6.0"
+version = "0.7.0"
 license = {file = "LICENSE"}
 
 maintainers = [
