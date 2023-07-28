@@ -31,9 +31,9 @@ They need to be installed manually using the following command (adapt the filena
 sudo apt install ./dewetron-dmd-reader-api_6.6.0-buster_amd64.deb
 ```
 
-Now install pyDmdReader:
+Now install pyDmdReader (as user):
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.7.2.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.7.2.tar.gz --user
 ```
 
 If pip fails, please try manual installation:
@@ -41,7 +41,7 @@ If pip fails, please try manual installation:
 You have to fullfill other python library dependencies:
 
 ```
-pip3 install pandas
+pip3 install pandas --user
 ```
 
 or run
