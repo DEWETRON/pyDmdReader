@@ -13,7 +13,7 @@ Direct integration into the Python Package Index is planned in the future.
 The pyDmdReader python package can be installed with
 
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.7.2.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.7.3.tar.gz
 ```
 
 Windows binaries (DMD reader DLLs) are installed automatically.
@@ -33,7 +33,7 @@ sudo apt install ./dewetron-dmd-reader-api_6.6.0-buster_amd64.deb
 
 Now install pyDmdReader (as user):
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.7.2.tar.gz --user
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.7.3.tar.gz --user
 ```
 
 If pip fails, please try manual installation:
