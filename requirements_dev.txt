@@ -2,3 +2,4 @@ numpy>=1.19.0
 pandas>=1.1.5
 pytest>=6.2.0
 pylint>=2.0.0
+setuptools>=67.8.0
