@@ -10,7 +10,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pyDmdReader",
-    version="0.7.1",
+    version="0.8.0",
     author="Matthias Straka",
     author_email="matthias.straka@dewetron.com",
     description="Python module to read Dewetron Oxygen DMD files",
