@@ -13,7 +13,7 @@ Direct integration into the Python Package Index is planned in the future.
 The pyDmdReader python package can be installed with
 
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.7.3.tar.gz
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.8.0.tar.gz
 ```
 
 Windows binaries (DMD reader DLLs) are installed automatically.
@@ -27,13 +27,19 @@ Contact Dewetron if you need support for another distribution or version.
 The dmdreader packages can be found on the [current release](https://github.com/DEWETRON/pyDmdReader/releases/latest) page.
 They need to be installed manually using the following command (adapt the filename to the one downloaded from the current release):
 
+Example for Ubuntu 22.04 12 "jammy":
 ```
-sudo apt install ./dewetron-dmd-reader-api_6.6.0-buster_amd64.deb
+sudo apt install ./dewetron-dmd-reader-api_7.1.0.216~release-jammy_amd64.deb
+```
+
+Example for Debian 12 "bookworm":
+```
+sudo apt install ./dewetron-dmd-reader-api_7.1.0.0-bookworm_amd64.deb
 ```
 
 Now install pyDmdReader (as user):
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.7.3.tar.gz --user
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v0.8.0.tar.gz --user
 ```
 
 If pip fails, please try manual installation:
@@ -112,14 +118,13 @@ This repository comes with pytest compatible unit tests which can be started by 
 # Contact
 For technical or other DMD reader related questions please contact:
 
-- Michael Oberhofer <michael.oberhofer@dewetron.com>
 - Gunther Laure <gunther.laure@dewetron.com>
 - Matthias Straka <matthias.straka@dewetron.com>
 
 # License
 MIT License
 
-Copyright (c) 2021-2022 DEWETRON
+Copyright (c) 2021-2024 DEWETRON
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
