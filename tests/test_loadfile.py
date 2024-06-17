@@ -13,6 +13,10 @@ from pyDmdReader import DmdReader
 
 SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data", "simple.dmd")
 DUPNAMES_DMD = os.path.join(os.path.dirname(__file__), "data", "duplicate_names.dmd")
+VERSION_DMD = {
+    '5.5.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "simple.dmd"), 'dmd_version': "3.0"},
+    '7.1.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy711.dmd"), 'dmd_version': "4.0"},
+}
 INTERNAL_DMD = "DMD_DEMO_FILE"
 
 
@@ -67,12 +71,18 @@ def test_duplicate_names():
         assert dmd.allchannels[dmd.channel_ids[0]].name == "AI 1/1 Sim"
         assert dmd.allchannels[dmd.channel_ids[1]].name == "AI 1/1 Sim"
 
-def test_read_configuration():
-    with DmdReader(SIMPLE_DMD) as dmd:
-        assert dmd.version.supports(1,2)
-        xml = dmd.configuration_xml
-        assert len(xml) > 0
+def test_check_version_support():
+    for oxy_version, dmd_definition in VERSION_DMD.items():
+        with DmdReader(dmd_definition['filename']) as dmd:
+            assert dmd.version.supports(1,2)
+            xml = dmd.configuration_xml
+            assert len(xml) > 0
 
-        tree = dmd.configuration_etree
-        assert tree.tag.endswith('MeasurementConfig')
-        assert tree.attrib['version'] == '3.0'
+            tree = dmd.configuration_etree
+            assert tree.tag.endswith('MeasurementConfig')
+            assert tree.attrib['version'] == dmd_definition['dmd_version']
+
+            app_info = tree.find('{http://xml.dewetron.com/oxygen/config}SystemInfo')[0]
+            assert app_info.tag.endswith('ApplicationInfo')
+            assert app_info.attrib['name'] == 'OXYGEN'
+            assert app_info.attrib['version'] == oxy_version
