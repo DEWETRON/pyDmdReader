@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.2.1] - 2024-08-29
+- Release community fixes
+- Synchronized pyDmdReader ersioning to Oxygen version
+- Compatibility to Oxygen 7.2.1
+
 ## [0.7.0] - 2023-07-24
 - Release community fixes
 - Compatibility to Oxygen 6.6

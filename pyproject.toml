@@ -1,11 +1,12 @@
 [project]
 name = "pyDmdReader"
 description = "Python module to read Dewetron Oxygen DMD files"
-version = "0.8.0"
+version = "7.2.1"
 license = {file = "LICENSE"}
 
 maintainers = [
     {name = "Matthias Straka", email = "matthias.straka@dewetron.com"},
+    {name = "Gunther Laure", email = "gunther.laure@dewetron.com"},
 ]
 requires-python = ">=3.6"
 dependencies = [
