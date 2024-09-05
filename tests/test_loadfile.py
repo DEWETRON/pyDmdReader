@@ -16,6 +16,7 @@ DUPNAMES_DMD = os.path.join(os.path.dirname(__file__), "data", "duplicate_names.
 VERSION_DMD = {
     '5.5.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "simple.dmd"), 'dmd_version': "3.0"},
     '7.1.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy711.dmd"), 'dmd_version': "4.0"},
+    '7.2.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy721.dmd"), 'dmd_version': "4.1"},
 }
 INTERNAL_DMD = "DMD_DEMO_FILE"
 
