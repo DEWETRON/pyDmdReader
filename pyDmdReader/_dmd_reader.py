@@ -110,7 +110,7 @@ class DmdReader:
     @property
     def version(self) -> Version:
         """Get DMD reader DLL inferface version"""
-        return _api.get_version()
+        return _api.get_interface_version()
     
     @property
     def dmd_version(self) -> Version:
@@ -120,6 +120,11 @@ class DmdReader:
         if len(parts) != 2:
             raise RuntimeError("Invalid version string: " + version_string)
         return Version(int(parts[0]), int(parts[1]))
+    
+    @property
+    def reader_version(self) -> Version:
+        """Get DMD reader DLL version"""
+        return _api.get_reader_version()
 
     def close(self) -> None:
         """Close DMD file"""

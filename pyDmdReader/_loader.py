@@ -51,6 +51,18 @@ def _get_exposed_dmd_functions() -> List[str]:
         ("DMDReader_GetConfigurationXML", Version(1, 2)),
     ]
 
+if sys.platform.startswith("win"):
+    from win32api import GetFileVersionInfo, LOWORD, HIWORD
+    def _get_version_number (filename) -> Version:
+        # Under windows, we can query the DLL file directly
+        info = GetFileVersionInfo(filename, "\\")
+        ms = info['FileVersionMS']
+        ls = info['FileVersionLS']
+        return Version(HIWORD(ms), LOWORD(ms), HIWORD(ls))
+else:
+    def _get_version_number (filename) -> Version:
+        # Under Linux, we need a different method
+        return Version(0, 0)
 
 class ApiLoader:
     """Dmd reader API loader class"""
@@ -77,8 +89,11 @@ class ApiLoader:
 
             for dmd_function in ("DMDReader_GetVersion", "DMDReader_Initialize"):
                 setattr(_api, f"_{dmd_function}", getattr(_g_dmd_reader_api_dll, dmd_function))
-            interface_version = _api.get_version()
+            interface_version = _api.get_interface_version()
             _api.initialize(1, 0)
+
+            version_info = _get_version_number(dll_file_path)
+            setattr(_api, "_DMDReader_DllVersion", version_info)
 
             # Initialize all dmd reader functions
             for dmd_function in _get_exposed_dmd_functions():

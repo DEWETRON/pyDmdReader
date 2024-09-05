@@ -124,29 +124,37 @@ class Version:
     """Version information with major and minor part"""
     major = None
     minor = None
+    micro = None
 
-    def __init__(self, major, minor):
+    def __init__(self, major, minor, micro = 0):
         self.major = major
         self.minor = minor
+        self.micro = micro
 
     def __repr__(self):
-        return f"{self.__class__.__name__} (major: {self.major}, minor: {self.minor})"
+        return f"{self.__class__.__name__} (major: {self.major}, minor: {self.minor}, micro: {self.micro})"
     
     def __str__(self):
+        if self.micro > 0:
+            return f"{self.major}.{self.minor}.{self.micro}"
         return f"{self.major}.{self.minor}"
 
     def supports(self, ma, mi):
         return self.major == ma and self.minor >= mi
 
     def __eq__(self, o):
-        return self.major == o.major and self.minor == o.minor
+        return self.major == o.major and self.minor == o.minor and self.micro == o.micro
 
     def __ne__(self, o):
-        return self.major != o.major or self.minor != o.minor
+        return self.major != o.major or self.minor != o.minor or self.micro != o.micro
 
     def __lt__(self, o):
         if self.major < o.major:
             return True
         if self.major > o.major:
             return False
-        return self.minor < o.minor
+        if self.minor < o.minor:
+            return True
+        if self.minor > o.minor:
+            return False
+        return self.micro < o.micro

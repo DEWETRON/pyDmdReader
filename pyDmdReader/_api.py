@@ -48,6 +48,7 @@ _DMDReader_GetNumReducedSweeps: Optional[type] = None
 _DMDReader_GetReducedSweeps: Optional[type] = None
 _DMDReader_GetConfigurationXML: Optional[type] = None
 
+_DMDReader_DllVersion = Version(0, 0)
 
 def _check_loaded(func):
     """Decorator to check if the dll is already loaded"""
@@ -76,13 +77,19 @@ def _check_error(error_code: int) -> None:
 
 
 @_check_loaded
-def get_version() -> Version:
+def get_interface_version() -> Version:
     """DMD Reader API get version"""
     interface_version_major = c_uint32(0)
     interface_version_minor = c_uint32(0)
     error_code = _DMDReader_GetVersion(byref(interface_version_major), byref(interface_version_minor))
     _check_error(error_code)
     return Version(interface_version_major.value, interface_version_minor.value)
+
+
+@_check_loaded
+def get_reader_version() -> Version:
+    """DMD Reader build version"""
+    return _DMDReader_DllVersion
 
 
 @_check_loaded

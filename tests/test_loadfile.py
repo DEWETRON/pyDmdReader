@@ -6,6 +6,7 @@ Dmd reader library - Unit Tests
 
 
 import os
+import sys
 import pytest
 from pyDmdReader.types import MarkerEventSource, MarkerEventType
 from pyDmdReader import DmdReader, Version
@@ -27,7 +28,8 @@ def test_check_version():
         assert version.major == 1
         assert version.minor == 2
         assert str(version) == "1.2"
-
+        if sys.platform.startswith("win"):
+            assert dmd.reader_version >= Version(7, 2)
 
 def test_check_channelnames():
     with DmdReader(SIMPLE_DMD) as dmd:
