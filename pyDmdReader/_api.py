@@ -1,4 +1,4 @@
-"""
+﻿"""
 Copyright DEWETRON GmbH 2021
 
 Dmd reader library - API module
@@ -66,6 +66,8 @@ def _check_error(error_code: int) -> None:
     """Helper function, to check given error_code"""
     error_code = ErrorCode(error_code)
     if error_code.value != 0:
+        if error_code == ErrorCode.FILE_DOES_NOT_EXIST:
+            raise FileNotFoundError(f"Error {error_code.value}: File does not exist")
         location = inspect.stack()[1][3]
         raise RuntimeError(f"Error in {location}() -> {error_code}")
 

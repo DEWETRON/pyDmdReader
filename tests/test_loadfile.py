@@ -8,15 +8,15 @@ Dmd reader library - Unit Tests
 import os
 import pytest
 from pyDmdReader.types import MarkerEventSource, MarkerEventType
-from pyDmdReader import DmdReader
+from pyDmdReader import DmdReader, Version
 
 
 SIMPLE_DMD = os.path.join(os.path.dirname(__file__), "data", "simple.dmd")
 DUPNAMES_DMD = os.path.join(os.path.dirname(__file__), "data", "duplicate_names.dmd")
 VERSION_DMD = {
-    '5.5.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "simple.dmd"), 'dmd_version': "3.0"},
-    '7.1.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy711.dmd"), 'dmd_version': "4.0"},
-    '7.2.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy721.dmd"), 'dmd_version': "4.1"},
+    '5.5.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "simple.dmd"), 'dmd_version': Version(3, 0)},
+    '7.1.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy711.dmd"), 'dmd_version': Version(4, 0)},
+    '7.2.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy721.dmd"), 'dmd_version': Version(4, 1)},
 }
 INTERNAL_DMD = "DMD_DEMO_FILE"
 
@@ -26,6 +26,7 @@ def test_check_version():
         version = dmd.version
         assert version.major == 1
         assert version.minor == 2
+        assert str(version) == "1.2"
 
 
 def test_check_channelnames():
@@ -79,9 +80,10 @@ def test_check_version_support():
             xml = dmd.configuration_xml
             assert len(xml) > 0
 
+            assert dmd.dmd_version == dmd_definition['dmd_version']
+
             tree = dmd.configuration_etree
             assert tree.tag.endswith('MeasurementConfig')
-            assert tree.attrib['version'] == dmd_definition['dmd_version']
 
             app_info = tree.find('{http://xml.dewetron.com/oxygen/config}SystemInfo')[0]
             assert app_info.tag.endswith('ApplicationInfo')

@@ -121,7 +121,7 @@ class Sweep(_ConverterBase):
 
 @total_ordering
 class Version:
-    """Describes the dll version"""
+    """Version information with major and minor part"""
     major = None
     minor = None
 
@@ -131,6 +131,9 @@ class Version:
 
     def __repr__(self):
         return f"{self.__class__.__name__} (major: {self.major}, minor: {self.minor})"
+    
+    def __str__(self):
+        return f"{self.major}.{self.minor}"
 
     def supports(self, ma, mi):
         return self.major == ma and self.minor >= mi
