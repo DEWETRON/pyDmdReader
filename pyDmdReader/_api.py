@@ -470,7 +470,7 @@ def get_configuration_xml(file_handle: c_void_p) -> str:
     return config.value.decode("utf-8")
 
 @_check_loaded
-def get_global_config_item(name: str) -> (str|None):
+def get_global_config_item(name: str) -> Optional[str]:
     """DMD Reader API Get a global config item"""
     if _DMDReader_GetGlobalConfigItem is None:
         return None

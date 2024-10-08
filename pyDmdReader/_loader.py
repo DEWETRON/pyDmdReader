@@ -5,13 +5,13 @@ Dmd reader library - DLL loader module
 """
 
 
+from ctypes import cdll
 import os
 import sys
-from ctypes import cdll
-from . import _api
-from .data_types import Version
 from typing import List
 
+from . import _api
+from .data_types import Version
 
 _g_dmd_reader_api_dll = None
 

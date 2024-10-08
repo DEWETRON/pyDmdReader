@@ -7,6 +7,7 @@ DMD reader library - Main class
 
 import xml.etree.ElementTree as et
 from ctypes import c_double, c_int32
+from typing import List, Dict, Tuple, Union, Optional, TYPE_CHECKING
 import pandas as pd
 import numpy as np
 
@@ -15,7 +16,6 @@ from .types import ChannelType, SampleType, DataFrameColumn, TimestampFormat
 from .data_types import HeaderField, MarkerEvent, MarkerEventType, MarkerEventSource, Version
 from ._channel_config import ChannelConfig
 from ._structures import DmdSampleValueComplex, DmdSampleValueReduced
-from typing import List, Dict, Tuple, Union, Optional, TYPE_CHECKING
 
 ASYNC_BLOCK_SIZE = 1000000
 if TYPE_CHECKING:
@@ -709,10 +709,7 @@ class DmdReader:
         if end_sample is not None:
             end_sample = int(end_sample) if end_sample is not None else ch_config.sweeps[-1].last_sample
         if cumulative_max_samples:
-            last_sample = cumulative_max_samples[-1]
-
-            if end_sample > last_sample:
-                end_sample = last_sample
+            end_sample = min(end_sample, cumulative_max_samples[-1])
 
         return end_sample
 

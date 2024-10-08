@@ -28,6 +28,9 @@ __all__ = [
 import platform
 import sys
 
+from . import _loader, _api
+from ._dmd_reader import DmdReader, TimestampFormat
+from .data_types import *
 
 DMDREADER_DLL_NAME = None
 if "64" in platform.architecture()[0]:
@@ -44,14 +47,7 @@ else:
 if not DMDREADER_DLL_NAME:
     raise ImportError(f"OS ({sys.platform} {platform.architecture()}) not supported")
 
-
-from . import _loader, _api
-from ._dmd_reader import DmdReader, TimestampFormat
-from .data_types import *
-
-
 _module_loader = _loader.ApiLoader(DMDREADER_DLL_NAME)
-
 
 def dispose():
     """Close the dmd reader dll"""
