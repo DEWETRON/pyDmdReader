@@ -97,8 +97,7 @@ class DmdReader:
     @property
     def configuration_xml(self) -> str:
         """Get the configuration to the dmd"""
-        config = _api.get_configuration_xml(self.__file_handle)
-        return config.decode("utf-8")
+        return _api.get_configuration_xml(self.__file_handle)
 
     @property
     def configuration_etree(self) -> str:

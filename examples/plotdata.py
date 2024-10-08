@@ -25,8 +25,9 @@ print(f"Measurement start time (utc): {dmd_file.measurement_start_time_utc}")
 print(f"Local measurement start time: {dmd_file.measurement_start_time_local}")
 print(f"Duration of the measurement: {dmd_file.measurement_duration:.4} seconds")
 
+print("Reader Version: " + str(dmd_file.reader_version))
 if dmd_file.version.supports(1,2):
-    print("Config: " + dmd_file.configuration_xml)
+    print("Config XML: " + dmd_file.configuration_xml)
 
 print("Channels:")
 channel_names = dmd_file.channel_names

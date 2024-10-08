@@ -6,7 +6,7 @@ Dmd reader library - API module
 
 
 import inspect
-from ctypes import c_int32, c_uint32, c_uint64, byref, c_char_p, c_void_p, c_bool, create_string_buffer
+from ctypes import c_int32, c_uint32, c_uint64, byref, c_char_p, c_void_p, c_bool
 from typing import Tuple, List, Optional, TYPE_CHECKING
 from ._structures import DmdTimestampUtc, DmdChannelInformation, DmdSweep, DmdMarkerEvent, DmdHeaderField, \
     DmdScaledSampleTimeStamp, DmdReducedSampleTimestamp, DmdDigitalSampleTimestamp
@@ -462,13 +462,12 @@ def get_reduced_sweeps(channel_handle: c_void_p, first_reduced_sweep: int, max_r
     return [Sweep(reduced_sweeps[i]) for i in range(0, num_reduced_sweeps.value)]
 
 @_check_loaded
-def get_configuration_xml(file_handle: c_void_p) -> bytes:
+def get_configuration_xml(file_handle: c_void_p) -> str:
     """DMD Reader API Get the file configuration"""
     config = c_char_p()
     error_code = _DMDReader_GetConfigurationXML(file_handle, byref(config))
     _check_error(error_code)
-    #s = ctypes.cast(config, ctypes.c_char_p).value
-    return config.value
+    return config.value.decode("utf-8")
 
 @_check_loaded
 def get_global_config_item(name: str) -> (str|None):
@@ -476,7 +475,7 @@ def get_global_config_item(name: str) -> (str|None):
     if _DMDReader_GetGlobalConfigItem is None:
         return None
 
-    config = c_char_p()
-    error_code = _DMDReader_GetGlobalConfigItem(create_string_buffer(name.encode("ascii")), byref(config))
+    result = c_char_p()
+    error_code = _DMDReader_GetGlobalConfigItem(c_char_p(name.encode("ascii")), byref(result))
     _check_error(error_code)
-    return config.value.decode("ascii")
+    return result.value.decode("ascii")
