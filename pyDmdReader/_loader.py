@@ -49,18 +49,19 @@ def _get_exposed_dmd_functions() -> List[str]:
         "DMDReader_GetNumReducedSweeps",
         "DMDReader_GetReducedSweeps",
         ("DMDReader_GetConfigurationXML", Version(1, 2)),
+        ("DMDReader_GetGlobalConfigItem", Version(1, 3)),
     ]
 
 if sys.platform.startswith("win"):
     from win32api import GetFileVersionInfo, LOWORD, HIWORD
-    def _get_version_number (filename) -> Version:
+    def _get_library_version_from_file(filename) -> Version:
         # Under windows, we can query the DLL file directly
         info = GetFileVersionInfo(filename, "\\")
         ms = info['FileVersionMS']
         ls = info['FileVersionLS']
         return Version(HIWORD(ms), LOWORD(ms), HIWORD(ls))
 else:
-    def _get_version_number (filename) -> Version:
+    def _get_library_version_from_file (filename) -> Version:
         # Under Linux, we need a different method
         return Version(0, 0)
 
@@ -92,18 +93,22 @@ class ApiLoader:
             interface_version = _api.get_interface_version()
             _api.initialize(1, 0)
 
-            version_info = _get_version_number(dll_file_path)
-            setattr(_api, "_DMDReader_DllVersion", version_info)
-
             # Initialize all dmd reader functions
             for dmd_function in _get_exposed_dmd_functions():
                 req_version = Version(1, 0)
                 if len(dmd_function) == 2:
-                    req_version = dmd_function[1]
+                    dmd_function, req_version = dmd_function
                     if not interface_version.supports(req_version.major, req_version.minor):
                         continue
-                    dmd_function = dmd_function[0]
                 setattr(_api, f"_{dmd_function}", getattr(_g_dmd_reader_api_dll, dmd_function))
+
+            # Extract DLL version
+            version_info_str = _api.get_global_config_item("ReaderVersion")
+            if version_info_str:
+                version_info = Version.parse(version_info_str)
+            else:
+                version_info = _get_library_version_from_file(dll_file_path)
+            setattr(_api, "_DMDReader_DllVersion", version_info)
 
         except Exception as err:
             raise ImportError(f"DMD reader dll ({filename}) could not be loaded. ({err})")

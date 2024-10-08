@@ -91,3 +91,19 @@ def test_check_demo_file_multicolumn():
     assert data.dtypes[2] == "float64"
 
     dmd.close()
+
+def test_version():
+    v = pyDmdReader.Version(1,2)
+    assert v.major == 1
+    assert v.minor == 2
+    assert v.micro == 0
+    assert str(v) == "1.2"
+
+    v = pyDmdReader.Version(1,2,3)
+    assert v.major == 1
+    assert v.minor == 2
+    assert v.micro == 3
+    assert str(v) == "1.2.3"
+
+    assert str(pyDmdReader.Version.parse("9.8")) == "9.8"
+    assert str(pyDmdReader.Version.parse("9.8.7")) == "9.8.7"

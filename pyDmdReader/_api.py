@@ -6,7 +6,7 @@ Dmd reader library - API module
 
 
 import inspect
-from ctypes import c_int32, c_uint32, c_uint64, byref, c_char_p, c_void_p, c_bool
+from ctypes import c_int32, c_uint32, c_uint64, byref, c_char_p, c_void_p, c_bool, create_string_buffer
 from typing import Tuple, List, Optional, TYPE_CHECKING
 from ._structures import DmdTimestampUtc, DmdChannelInformation, DmdSweep, DmdMarkerEvent, DmdHeaderField, \
     DmdScaledSampleTimeStamp, DmdReducedSampleTimestamp, DmdDigitalSampleTimestamp
@@ -46,6 +46,7 @@ _DMDReader_GetDataSweeps: Optional[type] = None
 _DMDReader_GetNumReducedSweeps: Optional[type] = None
 _DMDReader_GetReducedSweeps: Optional[type] = None
 _DMDReader_GetConfigurationXML: Optional[type] = None
+_DMDReader_GetGlobalConfigItem: Optional[type] = None
 
 _DMDReader_DllVersion = Version(0, 0)
 
@@ -468,3 +469,14 @@ def get_configuration_xml(file_handle: c_void_p) -> bytes:
     _check_error(error_code)
     #s = ctypes.cast(config, ctypes.c_char_p).value
     return config.value
+
+@_check_loaded
+def get_global_config_item(name: str) -> (str|None):
+    """DMD Reader API Get a global config item"""
+    if _DMDReader_GetGlobalConfigItem is None:
+        return None
+
+    config = c_char_p()
+    error_code = _DMDReader_GetGlobalConfigItem(create_string_buffer(name.encode("ascii")), byref(config))
+    _check_error(error_code)
+    return config.value.decode("ascii")

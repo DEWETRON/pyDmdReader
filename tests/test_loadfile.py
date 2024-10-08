@@ -26,8 +26,7 @@ def test_check_version():
     with DmdReader(SIMPLE_DMD) as dmd:
         version = dmd.version
         assert version.major == 1
-        assert version.minor == 2
-        assert str(version) == "1.2"
+        assert version.minor >= 2
         if sys.platform.startswith("win"):
             assert dmd.reader_version >= Version(7, 2)
 

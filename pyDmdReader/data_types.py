@@ -158,3 +158,15 @@ class Version:
         if self.minor > o.minor:
             return False
         return self.micro < o.micro
+    
+    @staticmethod
+    def parse(string : str):
+        """
+        Parses a string MAJOR.MINOR[.MICRO]
+        """
+        parts = string.split('.')
+        if len(parts) < 2:
+            raise RuntimeError("Not a valid version string")
+        if len(parts) > 3:
+            parts = parts[:3]
+        return Version(*[int(x) for x in parts])
