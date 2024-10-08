@@ -6,16 +6,15 @@ DMD reader library - Main class
 
 
 import xml.etree.ElementTree as et
-import numpy as np
+from ctypes import c_double, c_int32
 import pandas as pd
-from numpy import ndarray
+import numpy as np
 
 from . import _api
 from .types import ChannelType, SampleType, DataFrameColumn, TimestampFormat
 from .data_types import HeaderField, MarkerEvent, MarkerEventType, MarkerEventSource, Version
 from ._channel_config import ChannelConfig
 from ._structures import DmdSampleValueComplex, DmdSampleValueReduced
-from ctypes import c_double, c_int32
 from typing import List, Dict, Tuple, Union, Optional, TYPE_CHECKING
 
 ASYNC_BLOCK_SIZE = 1000000
@@ -111,7 +110,7 @@ class DmdReader:
     def version(self) -> Version:
         """Get DMD reader DLL inferface version"""
         return _api.get_interface_version()
-    
+
     @property
     def dmd_version(self) -> Version:
         """Get DMD version"""
@@ -120,7 +119,7 @@ class DmdReader:
         if len(parts) != 2:
             raise RuntimeError("Invalid version string: " + version_string)
         return Version(int(parts[0]), int(parts[1]))
-    
+
     @property
     def reader_version(self) -> Version:
         """Get DMD reader DLL version"""
@@ -286,7 +285,7 @@ class DmdReader:
 
         return result, result_timestamps
 
-    def __parse_utc_timestamps(self, result_timestamps: ndarray, timestamp_format:TimestampFormat):
+    def __parse_utc_timestamps(self, result_timestamps: np.ndarray, timestamp_format:TimestampFormat):
         if timestamp_format in [
             TimestampFormat.ABSOLUTE_LOCAL_TIME,
             TimestampFormat.ABSOLUTE_UTC_TIME,
@@ -297,7 +296,7 @@ class DmdReader:
         return result_timestamps
 
     @staticmethod
-    def __update_result_list(ch_config: ChannelConfig, data: ndarray, result_list: List[ndarray]):
+    def __update_result_list(ch_config: ChannelConfig, data: np.ndarray, result_list: List[np.ndarray]):
         if ch_config.max_sample_dimension == 1:
             result_list.append(data)
         else:
@@ -305,7 +304,7 @@ class DmdReader:
                 result_list.append(data[i::ch_config.max_sample_dimension])
 
     @staticmethod
-    def __parse_timestamps(result_timestamps: Optional[ndarray], timestamp_format: TimestampFormat, timestamps: ndarray) -> ndarray:
+    def __parse_timestamps(result_timestamps: Optional[np.ndarray], timestamp_format: TimestampFormat, timestamps: np.ndarray) -> np.ndarray:
         if result_timestamps is None:
             if timestamp_format != TimestampFormat.NONE:
                 result_timestamps = timestamps

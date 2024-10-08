@@ -5,11 +5,11 @@ Dmd reader library - Module for all accessible data types returned by DmdReader 
 """
 
 
-from functools import total_ordering
-import pandas as pd
 from datetime import timezone, timedelta
-from .types import MarkerEventSource, MarkerEventType, ChannelType
+from functools import total_ordering
 from typing import TYPE_CHECKING
+import pandas as pd
+from .types import MarkerEventSource, MarkerEventType, ChannelType
 if TYPE_CHECKING:
     from ._structures import DmdTimestampUtc, DmdHeaderField, DmdChannelInformation, DmdMarkerEvent, DmdSweep, \
         DmdStructures
@@ -133,7 +133,7 @@ class Version:
 
     def __repr__(self):
         return f"{self.__class__.__name__} (major: {self.major}, minor: {self.minor}, micro: {self.micro})"
-    
+
     def __str__(self):
         if self.micro > 0:
             return f"{self.major}.{self.minor}.{self.micro}"

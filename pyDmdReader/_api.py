@@ -6,13 +6,12 @@ Dmd reader library - API module
 
 
 import inspect
-from ctypes import c_int32, c_uint32, c_uint64, byref, c_char_p, c_void_p, c_bool, c_double
+from ctypes import c_int32, c_uint32, c_uint64, byref, c_char_p, c_void_p, c_bool
+from typing import Tuple, List, Optional, TYPE_CHECKING
 from ._structures import DmdTimestampUtc, DmdChannelInformation, DmdSweep, DmdMarkerEvent, DmdHeaderField, \
-    DmdScaledSampleTimeStamp, DmdReducedSampleTimestamp, DmdSampleValueComplex, DmdDigitalSampleTimestamp, \
-    DmdSampleValueReduced
+    DmdScaledSampleTimeStamp, DmdReducedSampleTimestamp, DmdDigitalSampleTimestamp
 from .types import SampleType, ErrorCode
 from .data_types import MarkerEvent, ChannelInformation, HeaderField, Sweep, DateTimeZone, Version
-from typing import Tuple, List, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from .types import ChannelType
     from ctypes import Array

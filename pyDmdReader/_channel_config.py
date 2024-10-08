@@ -5,8 +5,8 @@ Dmd reader library - Channel configuration module
 """
 
 
-from .types import SampleType
 from typing import TYPE_CHECKING
+from .types import SampleType
 if TYPE_CHECKING:
     from ctypes import c_void_p
     from .data_types import ChannelInformation
