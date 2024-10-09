@@ -10,10 +10,15 @@ Direct integration into the Python Package Index is planned in the future.
 
 ## Microsoft Windows
 
-The pyDmdReader python package can be installed with
+The latest release pyDmdReader Python package can be installed with
 
+```cmd
+pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v7.2.1.tar.gz
 ```
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v7.2.1.tar.gz
+
+Alternatively, you can install the current development version using
+```cmd
+pip install git+https://github.com/DEWETRON/pyDmdReader.git
 ```
 
 Windows binaries (DMD reader DLLs) are installed automatically.
@@ -28,18 +33,17 @@ The dmdreader packages can be found on the [current release](https://github.com/
 They need to be installed manually using the following command (adapt the filename to the one downloaded from the current release):
 
 Example for Ubuntu 22.04 12 "jammy":
-```
+```bash
 sudo apt install ./dewetron-dmd-reader-api_7.1.0.216~release-jammy_amd64.deb
 ```
 
-Example for Debian 12 "bookworm":
-```
-sudo apt install ./dewetron-dmd-reader-api_7.1.0.0-bookworm_amd64.deb
-```
-
 Now install pyDmdReader (as user):
-```
+```bash
 python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v7.2.1.tar.gz --user
+```
+or install the current development version using
+```bash
+python3 -m pip install git+https://github.com/DEWETRON/pyDmdReader.git --user
 ```
 
 If pip fails, please try manual installation:
