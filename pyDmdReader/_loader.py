@@ -52,18 +52,19 @@ def _get_exposed_dmd_functions() -> List[str]:
         ("DMDReader_GetGlobalConfigItem", Version(1, 3)),
     ]
 
-if sys.platform.startswith("win"):
-    from win32api import GetFileVersionInfo, LOWORD, HIWORD
-    def _get_library_version_from_file(filename) -> Version:
-        # Under windows, we can query the DLL file directly
-        info = GetFileVersionInfo(filename, "\\")
-        ms = info['FileVersionMS']
-        ls = info['FileVersionLS']
-        return Version(HIWORD(ms), LOWORD(ms), HIWORD(ls))
-else:
-    def _get_library_version_from_file (filename) -> Version:
-        # Under Linux, we need a different method
-        return Version(0, 0)
+def _get_library_version_from_file(filename) -> Version:
+    if sys.platform.startswith("win"):
+        try:
+            # Under windows, we can query the DLL file directly
+            from win32api import GetFileVersionInfo, LOWORD, HIWORD
+            info = GetFileVersionInfo(filename, "\\")
+            ms = info['FileVersionMS']
+            ls = info['FileVersionLS']
+            return Version(HIWORD(ms), LOWORD(ms), HIWORD(ls))
+        except ModuleNotFoundError:
+            pass
+    # Fallback to empty version if there is no file-info support
+    return Version(0, 0)
 
 class ApiLoader:
     """Dmd reader API loader class"""
