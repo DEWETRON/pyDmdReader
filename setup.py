@@ -10,7 +10,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pyDmdReader",
-    version="0.8.0",
+    version="7.2.1",
     author="Matthias Straka",
     author_email="matthias.straka@dewetron.com",
     description="Python module to read Dewetron Oxygen DMD files",
@@ -25,8 +25,13 @@ setuptools.setup(
     },
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Programming Language :: Python :: 3",
+        "Intended Audience :: Science/Research",
+        "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Topic :: Software Development :: Libraries",
+        "Topic :: Scientific/Engineering",
         "Operating System :: Microsoft :: Windows",
         "Operating System :: POSIX :: Linux",
     ],
@@ -35,5 +40,5 @@ setuptools.setup(
     package_dir={"pyDmdReader": "pyDmdReader"},
     package_data={"pyDmdReader": ["bin/*.dll", "bin/*.so"]},
     install_requires=["numpy>=1.19.0", "pandas>=1.1.5"],
-    python_requires=">=3.6",
+    python_requires=">=3.9",
 )
