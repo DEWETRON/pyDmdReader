@@ -26,9 +26,9 @@ def test_check_version():
     with DmdReader(SIMPLE_DMD) as dmd:
         version = dmd.version
         assert version.major == 1
-        assert version.minor >= 2
+        assert version.minor >= 3
         if sys.platform.startswith("win"):
-            assert dmd.reader_version >= Version(7, 2)
+            assert dmd.reader_version >= Version(7, 3)
 
 def test_check_channelnames():
     with DmdReader(SIMPLE_DMD) as dmd:
