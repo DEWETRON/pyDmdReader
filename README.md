@@ -13,7 +13,7 @@ Direct integration into the Python Package Index is planned in the future.
 The latest release pyDmdReader Python package can be installed with
 
 ```cmd
-pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v7.3.2.tar.gz
+pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v.7.3.2.tar.gz
 ```
 
 Alternatively, you can install the current development version using
@@ -32,14 +32,15 @@ Contact Dewetron if you need support for another distribution or version.
 The pyDmdReader packages can be found on the [current release](https://github.com/DEWETRON/pyDmdReader/releases/latest) page.
 They need to be installed manually using the following command (adapt the filename to the one downloaded from the current release):
 
-Example for Ubuntu 22.04 12 "jammy":
+Example for Ubuntu 24.04 "noble":
 ```bash
-sudo apt install ./dewetron-dmd-reader-api_7.1.0.216~release-jammy_amd64.deb
+wget https://github.com/DEWETRON/pyDmdReader/releases/download/v.7.3.2/dewetron-dmd-reader-api_7.3.2.7.release-noble_amd64.deb
+sudo apt install ./dewetron-dmd-reader-api_7.3.2.7.release-noble_amd64.deb
 ```
 
 Now install pyDmdReader (as user):
 ```bash
-python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v7.3.2.tar.gz --user
+python3 -m pip install https://github.com/DEWETRON/pyDmdReader/archive/refs/tags/v.7.3.2.tar.gz --user
 ```
 or install the current development version using
 ```bash
