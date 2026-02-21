@@ -1,0 +1,198 @@
+name: Wheels
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      reader_api_tag:
+        description: "DEWETRON reader API release tag"
+        required: true
+        default: "v.7.3.2"
+        type: string
+      reader_api_asset:
+        description: "Linux reader API package asset"
+        required: true
+        default: "dewetron-dmd-reader-api-7.3.473.release-1.el9.x86_64.rpm"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  linux-wheel-build:
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:9
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bootstrap build environment
+        run: |
+          dnf install -y \
+            ca-certificates \
+            python3 \
+            python3-pip \
+            python3-setuptools \
+            file
+
+      - name: Install build dependencies
+        run: python3 -m pip install --upgrade pip build wheel
+
+      - name: Stage Linux runtime payload
+        env:
+          DMDREADER_API_TAG: ${{ github.event.inputs.reader_api_tag || 'v.7.3.2' }}
+          DMDREADER_API_ASSET: ${{ github.event.inputs.reader_api_asset || 'dewetron-dmd-reader-api-7.3.473.release-1.el9.x86_64.rpm' }}
+        run: tools/stage_linux_runtime.sh
+
+      - name: Build wheel
+        run: python3 -m build --wheel
+
+      - name: Validate wheel tag
+        run: |
+          python3 - <<'PY'
+          import glob
+          wheels = glob.glob("dist/*.whl")
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected one wheel, got: {wheels}")
+          wheel = wheels[0]
+          print(f"wheel={wheel}")
+          if wheel.endswith("any.whl"):
+              raise SystemExit("Expected platform-specific wheel, got py3-none-any")
+          PY
+
+      - name: Install wheel and smoke test
+        run: |
+          python3 -m pip install dist/*.whl
+          (
+            cd /tmp
+            python3 "${GITHUB_WORKSPACE}/tools/smoke_read.py" \
+              "${GITHUB_WORKSPACE}/tests/data/simple.dmd"
+          )
+
+      - name: Upload Linux wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-wheel
+          path: dist/*.whl
+          if-no-files-found: error
+
+  linux-wheel-python-matrix:
+    needs: linux-wheel-build
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Download Linux wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-wheel
+          path: dist
+
+      - name: Install wheel and smoke test
+        run: |
+          python -m pip install dist/*.whl
+          (
+            cd /tmp
+            python "${GITHUB_WORKSPACE}/tools/smoke_read.py" \
+              "${GITHUB_WORKSPACE}/tests/data/simple.dmd"
+          )
+
+  linux-wheel-distro-matrix:
+    needs: linux-wheel-build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ubuntu-22.04
+            image: ubuntu:22.04
+            bootstrap: |
+              apt-get update
+              apt-get install -y ca-certificates python3 python3-pip file
+          - name: ubuntu-24.04
+            image: ubuntu:24.04
+            bootstrap: |
+              apt-get update
+              apt-get install -y ca-certificates python3 python3-pip file
+          - name: debian-12
+            image: debian:12
+            bootstrap: |
+              apt-get update
+              apt-get install -y ca-certificates python3 python3-pip file
+          - name: rockylinux-9
+            image: rockylinux:9
+            bootstrap: |
+              dnf install -y ca-certificates python3 python3-pip file
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bootstrap runtime dependencies
+        run: ${{ matrix.bootstrap }}
+
+      - name: Download Linux wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-wheel
+          path: dist
+
+      - name: Verify wheel on distro image
+        run: tools/verify_wheel_install.sh dist/*.whl
+
+  windows-wheel:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install build dependencies
+        run: python -m pip install --upgrade pip build wheel pywin32
+
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - name: Validate wheel tag
+        shell: bash
+        run: |
+          python - <<'PY'
+          import glob
+          wheels = glob.glob("dist/*.whl")
+          if len(wheels) != 1:
+              raise SystemExit(f"Expected one wheel, got: {wheels}")
+          wheel = wheels[0]
+          print(f"wheel={wheel}")
+          if wheel.endswith("any.whl"):
+              raise SystemExit("Expected platform-specific wheel, got py3-none-any")
+          PY
+
+      - name: Install wheel and smoke test
+        run: |
+          python -m pip install dist/*.whl
+          python tools/smoke_read.py tests/data/simple.dmd
+
+      - name: Upload Windows wheel
+        if: ${{ matrix.python-version == '3.12' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-wheel
+          path: dist/*.whl
+          if-no-files-found: error

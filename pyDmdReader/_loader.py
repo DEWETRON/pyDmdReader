@@ -4,8 +4,9 @@ Copyright DEWETRON GmbH 2021
 Dmd reader library - DLL loader module
 """
 
-
+import ctypes
 from ctypes import cdll
+import glob
 import os
 import sys
 from typing import List
@@ -14,6 +15,7 @@ from . import _api
 from .data_types import Version
 
 _g_dmd_reader_api_dll = None
+_g_linux_dep_handles = []
 
 
 def _get_exposed_dmd_functions() -> List[str]:
@@ -52,6 +54,7 @@ def _get_exposed_dmd_functions() -> List[str]:
         ("DMDReader_GetGlobalConfigItem", Version(1, 3)),
     ]
 
+
 def _get_library_version_from_file(filename) -> Version:
     if sys.platform.startswith("win"):
         try:
@@ -66,28 +69,67 @@ def _get_library_version_from_file(filename) -> Version:
     # Fallback to empty version if there is no file-info support
     return Version(0, 0)
 
+
+def _preload_linux_dependencies(package_dir):
+    deps_dir = os.path.join(package_dir, "bin", "linux_x86_64", "deps")
+    if not os.path.isdir(deps_dir):
+        return
+
+    dep_files = sorted(glob.glob(os.path.join(deps_dir, "*.so*")))
+    if not dep_files:
+        return
+
+    load_mode = getattr(os, "RTLD_NOW", 0) | getattr(os, "RTLD_GLOBAL", 0)
+    pending = dep_files
+
+    while pending:
+        next_pending = []
+        for dep_file in pending:
+            try:
+                _g_linux_dep_handles.append(ctypes.CDLL(dep_file, mode=load_mode))
+            except OSError:
+                next_pending.append(dep_file)
+        if len(next_pending) == len(pending):
+            return
+        pending = next_pending
+
 class ApiLoader:
     """Dmd reader API loader class"""
     def __init__(self, filename):
         try:
             global _g_dmd_reader_api_dll
+            package_dir = os.path.dirname(__file__)
 
             # Load the dmd reader dll
             if sys.platform.startswith("win"):
-                dll_file_paths = [os.path.join(os.path.dirname(__file__), "bin", filename)]
+                dll_file_paths = [os.path.join(package_dir, "bin", filename)]
+            elif sys.platform.startswith("linux"):
+                _preload_linux_dependencies(package_dir)
+                dll_file_paths = [
+                    os.path.join(package_dir, "bin", "linux_x86_64", filename),
+                    os.path.join(package_dir, "bin", filename),
+                    filename,
+                ]
             else:
                 dll_file_paths = [
                     filename,
-                    os.path.join(os.path.dirname(__file__), "bin", filename),
+                    os.path.join(package_dir, "bin", filename),
                     ]
+
+            loaded_from = None
+            last_error = None
 
             # Try multiple file paths until one does not throw an exception
             for dll_file_path in dll_file_paths:
                 try:
                     _g_dmd_reader_api_dll = cdll.LoadLibrary(dll_file_path)
+                    loaded_from = dll_file_path
                     break
-                except FileNotFoundError:
-                    pass
+                except OSError as err:
+                    last_error = err
+
+            if _g_dmd_reader_api_dll is None:
+                raise ImportError(f"DMD reader dll ({filename}) could not be loaded. ({last_error})")
 
             for dmd_function in ("DMDReader_GetVersion", "DMDReader_Initialize"):
                 setattr(_api, f"_{dmd_function}", getattr(_g_dmd_reader_api_dll, dmd_function))
@@ -108,15 +150,18 @@ class ApiLoader:
             if version_info_str:
                 version_info = Version.parse(version_info_str)
             else:
-                version_info = _get_library_version_from_file(dll_file_path)
+                version_info = _get_library_version_from_file(loaded_from or filename)
             setattr(_api, "_DMDReader_DllVersion", version_info)
 
+        except ImportError:
+            raise
         except Exception as err:
             raise ImportError(f"DMD reader dll ({filename}) could not be loaded. ({err})")
 
     def __del__(self):
         try:
             global _g_dmd_reader_api_dll
+            global _g_linux_dep_handles
 
             _api.dispose()
 
@@ -125,5 +170,6 @@ class ApiLoader:
                 setattr(_api, dmd_function, None)
 
             _g_dmd_reader_api_dll = None
+            _g_linux_dep_handles = []
         except:
             pass
