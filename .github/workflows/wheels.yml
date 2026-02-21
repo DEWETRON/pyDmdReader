@@ -81,6 +81,7 @@ jobs:
     needs: linux-wheel-build
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
@@ -153,6 +154,7 @@ jobs:
   windows-wheel:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
@@ -185,6 +187,7 @@ jobs:
           PY
 
       - name: Install wheel and smoke test
+        shell: bash
         run: |
           python -m pip install dist/*.whl
           python tools/smoke_read.py tests/data/simple.dmd
