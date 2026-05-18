@@ -18,6 +18,7 @@ VERSION_DMD = {
     '5.5.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "simple.dmd"), 'dmd_version': Version(3, 0)},
     '7.1.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy711.dmd"), 'dmd_version': Version(4, 0)},
     '7.2.1': {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy721.dmd"), 'dmd_version': Version(4, 1)},
+    '8.1':   {'filename': os.path.join(os.path.dirname(__file__), "data", "oxy810.dmd"), 'dmd_version': Version(5, 0)},
 }
 INTERNAL_DMD = "DMD_DEMO_FILE"
 
