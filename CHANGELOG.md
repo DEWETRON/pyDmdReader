@@ -3,21 +3,21 @@
 All notable changes to this project will be documented in this file.
 
 ## [7.3.2] - 2024-12-02
-- Compatible to Oxygen 7.3
+- Compatible to OXYGEN 7.3
 - Support for DMD Interface 1.3
 - Version numbers can now be queried from global config info
 
 ## [7.2.1] - 2024-08-29
 - Release community fixes
-- Synchronized pyDmdReader ersioning to Oxygen version
-- Compatibility to Oxygen 7.2.1
+- Synchronized pyDmdReader ersioning to OXYGEN version
+- Compatibility to OXYGEN 7.2.1
 
 ## [0.7.0] - 2023-07-24
 - Release community fixes
-- Compatibility to Oxygen 6.6
+- Compatibility to OXYGEN 6.6
 - all read_* methods now accept an optional `max_samples` parameter that limits the number of returned samples
 - Support for reading the configuration XML from DMD files with the `configuration_xml` DmdReader property
-- Updated Windows binaries for Oxygen 6.2 compatibility
+- Updated Windows binaries for OXYGEN 6.2 compatibility
 
 ## [0.5.0] - 2022-07-01
 
@@ -28,18 +28,18 @@ All notable changes to this project will be documented in this file.
 - DmdReader `allchannels` returns a dictionary of all channels with a unique ID as key
 
 ### Changed
-- `read_dataframe`, `read_array` and `read_reduced`  optionally use the unique channel ID (`int`) instead of the channel name (`str`)
+- `read_dataframe`, `read_array` and `read_reduced` optionally use the unique channel ID (`int`) instead of the channel name (`str`)
 
 ## [0.4.0] - 2022-04-06
 
 ### Changed
 - Fixed pyproject.toml to be used with recent pip install versions
-- Updated Windows binaries for Oxygen 6.1 compatibility (no change in the python library)
+- Updated Windows binaries for OXYGEN 6.1 compatibility (no change in the python library)
 
 ## [0.3.0] - 2021-12-13
 
 ### Changed
-- Updated Windows binaries for Oxygen 6.0 compatibility (no change in the python library)
+- Updated Windows binaries for OXYGEN 6.0 compatibility (no change in the python library)
 
 ## [0.2.0] - 2021-10-04
 

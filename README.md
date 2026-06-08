@@ -1,11 +1,11 @@
 # DEWETRON pyDmdReader
 
 pyDmdReader is a Python wrapper for the [Dewetron](https://www.dewetron.com/) DMD Reader API.
-It allows to conveniently read DMD files that were recorded with the [Dewetron Oxygen](https://www.dewetron.com/products/oxygen-measurement-software/) measurement software.
+It allows to conveniently read DMD files that were recorded with the [Dewetron OXYGEN](https://www.dewetron.com/products/oxygen-measurement-software/) measurement software.
 
 # Installation
 
-Currently, the package needs to be installed by using github release archives.
+Currently, the package needs to be installed by using GitHub release archives.
 Direct integration into the Python Package Index is planned in the future.
 
 ## Microsoft Windows

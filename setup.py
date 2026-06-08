@@ -13,7 +13,7 @@ setuptools.setup(
     version="7.3.2",
     author="Matthias Straka",
     author_email="matthias.straka@dewetron.com",
-    description="Python module to read Dewetron Oxygen DMD files",
+    description="Python module to read Dewetron OXYGEN DMD files",
     license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",
