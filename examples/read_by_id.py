@@ -17,7 +17,15 @@ with pyDmdReader.DmdReader(filename) as dmd:
 
     # Print the name of the first channel by ID
     print(f"First channel's name is {dmd.allchannels[dmd.channel_ids[0]].name}")
+    print()
 
     # Read first two channels
     data = dmd.read_dataframe(dmd.channel_ids[0:2])
+    print(f"Data for channels {[dmd.allchannels[id].name for id in dmd.channel_ids[0:2]]}")
+    print(data)
+    print()
+
+    # Read the reduced data of first channels
+    print(f"Reduced data for channel {dmd.allchannels[dmd.channel_ids[0]].name}")
+    data = dmd.read_reduced(dmd.channel_ids[0])
     print(data)
