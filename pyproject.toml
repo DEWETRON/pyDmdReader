@@ -11,7 +11,7 @@ maintainers = [
     {name = "Matthias Straka", email = "matthias.straka@dewetron.com"},
     {name = "Gunther Laure", email = "gunther.laure@dewetron.com"},
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.21.0",
     "pandas>=1.3.0",
