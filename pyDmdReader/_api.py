@@ -6,6 +6,7 @@ Dmd reader library - API module
 
 
 import inspect
+import errno
 from ctypes import c_int32, c_uint32, c_uint64, byref, c_char_p, c_void_p, c_bool
 from typing import Tuple, List, Optional, TYPE_CHECKING
 from ._structures import DmdTimestampUtc, DmdChannelInformation, DmdSweep, DmdMarkerEvent, DmdHeaderField, \
@@ -63,12 +64,14 @@ def _check_loaded(func):
     return func_wrapper
 
 
-def _check_error(error_code: int) -> None:
+def _check_error(error_code: int, filename = None) -> None:
     """Helper function, to check given error_code"""
     error_code = ErrorCode(error_code)
     if error_code.value != 0:
         if error_code == ErrorCode.FILE_DOES_NOT_EXIST:
-            raise FileNotFoundError(f"Error {error_code.value}: File does not exist")
+            raise FileNotFoundError(errno.ENOENT, f"Error {error_code.value}: File does not exist", filename)
+        elif error_code == ErrorCode.ACCESS_DENIED:
+            raise PermissionError(errno.EACCES, f"Error {error_code.value}: Permission denied", filename)
         location = inspect.stack()[1][3]
         raise RuntimeError(f"Error in {location}() -> {error_code}")
 
@@ -111,7 +114,7 @@ def open_file(filename: str) -> c_void_p:
     """DMD Reader API Open file"""
     file_handle = c_void_p()
     error_code = _DMDReader_OpenFile(c_char_p(filename.encode("utf-8")), byref(file_handle))
-    _check_error(error_code)
+    _check_error(error_code, filename)
     return file_handle
 
 
